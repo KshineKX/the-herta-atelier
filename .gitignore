@@ -1,0 +1,12 @@
+node_modules/
+dist/
+private-media/
+runtime-data/
+*.log
+packages/skin/assets/*.webp
+packages/boot/assets/videos/*
+!packages/boot/assets/videos/.gitkeep
+.DS_Store
+Thumbs.db
+release-manifest.json
+**/runtime-config.json
