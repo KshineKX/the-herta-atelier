@@ -1,0 +1,20 @@
+{
+  "light": {
+    "background": "rgba(250, 246, 252, 0.9)",
+    "right": 949,
+    "text": "rgb(46, 33, 64)",
+    "width": 665
+  },
+  "dark": {
+    "background": "rgba(20, 14, 30, 0.86)",
+    "text": "rgb(243, 236, 249)",
+    "width": 665
+  },
+  "toggleOff": true,
+  "narrow": {
+    "bodyOverflow": false,
+    "codeContained": true,
+    "column": 535,
+    "width": 850
+  }
+}

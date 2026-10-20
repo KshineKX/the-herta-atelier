@@ -1,0 +1,45 @@
+{
+  "name": "dsh-herta-atelier",
+  "version": "0.4.0-beta.3",
+  "description": "大黑塔 · 天才书房：紫黑与晨光双主题，银纹、紫花、宝石与钥匙的极繁主义皮肤。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [],
+      "platform": "web"
+    }
+  },
+  "files": [
+    "lib",
+    "assets",
+    "licenses",
+    "cordis.patch.yml",
+    "skin.json",
+    "NOTICE.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "private": true,
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "author": "Kshine",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KshineKX/the-herta-atelier.git",
+    "directory": "packages/skin"
+  },
+  "homepage": "https://github.com/KshineKX/the-herta-atelier#readme",
+  "bugs": {
+    "url": "https://github.com/KshineKX/the-herta-atelier/issues"
+  }
+}

@@ -1,0 +1,15 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {fileURLToPath} from 'node:url';import {spawnSync} from 'node:child_process';
+const root=fileURLToPath(new URL('../',import.meta.url)),pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json')));
+const build=spawnSync(process.execPath,['tools/build.mjs'],{cwd:root,stdio:'inherit',windowsHide:true});if(build.status)process.exit(build.status);
+const args=process.argv.slice(2);if(args.some(x=>x!=='--personal'))throw Error('Expected --personal or no arguments');
+const personal=args.includes('--personal'),sourceManifest=JSON.parse(fs.readFileSync(path.join(root,'release-manifest.json')));
+if(personal&&sourceManifest.edition!=='personal')throw Error('Personal media set is not available locally.');
+const edition=personal?'personal':'core';
+const label='The-Herta-Atelier-'+pkg.version+'-'+edition,out=path.join(root,'dist'),stage=path.join(out,label);
+if(fs.existsSync(stage))throw Error('Release staging already exists; preserve it or move it aside first.');
+const allowed=['package.json','release-manifest.json','README.md','LICENSE','NOTICE.md','CHANGELOG.md','AGENTS.md','CONTRIBUTING.md','SECURITY.md','SUPPORT.md','.gitignore','.gitattributes','packages','tools','tests','docs','.github','Install.cmd','InstallWithBoot.cmd','Uninstall.cmd','Check.cmd','OpenGallery.cmd','ImportVideo.cmd'];
+function copy(from,to){const stat=fs.lstatSync(from);if(stat.isSymbolicLink())throw Error('Symlink in release source');if(stat.isDirectory()){fs.mkdirSync(to,{recursive:true});for(const name of fs.readdirSync(from)){if((name==='node_modules'&&!from.endsWith(path.sep+'vendor'))||(name.startsWith('.')&&!['.gitkeep'].includes(name))||(from.endsWith(path.join('assets','videos'))&&name!=='.gitkeep'))continue;copy(path.join(from,name),path.join(to,name));}}else{const rel=path.relative(root,from).replaceAll('\\','/');if(!personal&&(rel.endsWith('.webp')||rel.startsWith('docs/screenshots/')))return;fs.mkdirSync(path.dirname(to),{recursive:true});fs.copyFileSync(from,to);}}
+for(const file of allowed){const from=path.join(root,file);if(fs.existsSync(from))copy(from,path.join(stage,file));}
+const files=sourceManifest.files.filter(e=>fs.existsSync(path.join(stage,e.path)));fs.writeFileSync(path.join(stage,'release-manifest.json'),JSON.stringify({...sourceManifest,edition,mediaRights:personal?'pending; personal use only':'no unreviewed raster media',files},null,2)+'\n');
+const zip=path.join(out,label+'.zip');const result=spawnSync('powershell.exe',['-NoProfile','-ExecutionPolicy','Bypass','-File',path.join(root,'tools/archive.ps1'),'-InputDir',stage,'-OutputFile',zip],{stdio:'inherit',windowsHide:true});if(result.status)process.exit(result.status);
+const sha=crypto.createHash('sha256').update(fs.readFileSync(zip)).digest('hex');fs.writeFileSync(path.join(out,label+'.sha256'),sha+'  '+path.basename(zip)+'\n');console.log(JSON.stringify({zip,sha256:sha,edition,bytes:fs.statSync(zip).size}));

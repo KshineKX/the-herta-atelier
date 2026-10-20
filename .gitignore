@@ -1,5 +1,5 @@
 node_modules/
-dist/
+/dist/
 private-media/
 runtime-data/
 *.log
@@ -10,3 +10,4 @@ packages/boot/assets/videos/*
 Thumbs.db
 release-manifest.json
 **/runtime-config.json
+/docs/screenshots/

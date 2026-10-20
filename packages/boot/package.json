@@ -1,0 +1,48 @@
+{
+  "name": "dsh-boot-animation",
+  "version": "0.4.0-beta.3",
+  "description": "大黑塔开屏：个人影片、任意键进入、进度与失败兜底；基于 dsh-boot-animation。",
+  "license": "MIT",
+  "author": "Kshine (Herta customization); upstream lxj5820",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KshineKX/the-herta-atelier.git",
+    "directory": "packages/boot"
+  },
+  "homepage": "https://github.com/KshineKX/the-herta-atelier#readme",
+  "bugs": {
+    "url": "https://github.com/KshineKX/the-herta-atelier/issues"
+  },
+  "type": "module",
+  "main": "entry.js",
+  "exports": {
+    ".": "./entry.js",
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "assets",
+    "lib",
+    "src",
+    "cordis.patch.yml",
+    "entry.js",
+    "package.json",
+    "vendor",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "private": true
+}

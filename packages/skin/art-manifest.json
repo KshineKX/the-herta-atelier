@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "type": "AI-assisted unofficial fan illustrations",
+  "format": "lossless WebP",
+  "pixelVerification": "decoded RGBA SHA-256 equals PNG master",
+  "files": [
+    {
+      "name": "art-home-dark-soft.webp",
+      "bytes": 1633002,
+      "pixelExact": true
+    },
+    {
+      "name": "art-home-light-soft.webp",
+      "bytes": 1787026,
+      "pixelExact": true
+    },
+    {
+      "name": "art-home-dark-crisp.webp",
+      "bytes": 2049616,
+      "pixelExact": true
+    },
+    {
+      "name": "art-home-light-crisp.webp",
+      "bytes": 2199140,
+      "pixelExact": true
+    },
+    {
+      "name": "art-home-dark-ultra.webp",
+      "bytes": 17574740,
+      "pixelExact": true
+    },
+    {
+      "name": "art-home-light-ultra.webp",
+      "bytes": 19009150,
+      "pixelExact": true
+    },
+    {
+      "name": "art-room-soft.webp",
+      "bytes": 1807092,
+      "pixelExact": true
+    },
+    {
+      "name": "art-room-ultra.webp",
+      "bytes": 14384502,
+      "pixelExact": true
+    },
+    {
+      "name": "art-campus-soft.webp",
+      "bytes": 2016638,
+      "pixelExact": true
+    },
+    {
+      "name": "art-campus-ultra.webp",
+      "bytes": 17036488,
+      "pixelExact": true
+    }
+  ],
+  "projectMaintainer": "Kshine",
+  "rightsStatus": "pending review; personal media only",
+  "publicDistributionCleared": false
+}

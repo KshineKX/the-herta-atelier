@@ -1,0 +1,20 @@
+name: 问题反馈
+description: 报告皮肤或安装问题
+body:
+  - type: input
+    id: version
+    attributes:
+      label: 插件版本与 DSH 版本
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤、窗口大小与缩放比例
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 截图或错误信息
+      description: 请先遮住账号、私聊、API 密钥和本机隐私路径。

@@ -1,0 +1,27 @@
+{
+  "name": "the-herta-atelier",
+  "version": "0.4.0-beta.3",
+  "private": true,
+  "author": "Kshine",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "type": "module",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "verify": "node tools/verify.mjs",
+    "preview": "node tools/preview.mjs",
+    "release": "node tools/release.mjs",
+    "doctor": "node tools/manage.mjs doctor"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KshineKX/the-herta-atelier.git"
+  },
+  "homepage": "https://github.com/KshineKX/the-herta-atelier#readme",
+  "bugs": {
+    "url": "https://github.com/KshineKX/the-herta-atelier/issues"
+  }
+}

@@ -1,0 +1,19 @@
+name: Check
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/build.mjs
+      - run: node --test tests/*.test.mjs
+      - run: node tools/verify.mjs
+      - run: node packages/boot/verify/verify-entry.mjs
+      - run: node packages/boot/verify/verify-degraded.mjs
+      - run: node packages/boot/verify/verify-options.mjs
+      - run: node tools/release.mjs
