@@ -1,24 +1,24 @@
 # The Herta Atelier · 大黑塔·天才书房
 
-**Kshine 的非官方 DSH 主题作品 · 0.4.0-beta.3 · Windows**
+**Kshine 的非官方 DSH 主题作品 · 0.4.0-beta.4 · Windows**
 
-紫黑与晨光双主题，支持个人导入的三场景画像，银纹、紫花、宝石与钥匙的层叠框饰。
+紫黑与晨光双主题，三幅内置大黑塔场景画像，银纹、紫花、宝石与钥匙的层叠框饰。
 正文默认开启阅读保护：有边界的阅读列与稳定衬底，人物与花饰留在外围。
 设置面板为靠左展开的毛玻璃，深浅切换使用同一进度；藏镜由用户管理本地图库。
 
-![The Herta Atelier](docs/cover.svg)
+![完整主题阅读演示](docs/screenshots/reading-light.jpg)
 
 ## 给第一次使用的朋友
 
-1. 下载审核后的 **-core.zip** 安装包并解压到普通文件夹。正式 Release 尚未发布；当前是待真机验收的 beta。
+1. 从 Releases 下载 **-theme.zip 完整主题包**并解压，内含三组人物背景与全部清晰度版本；当前为 beta。
 2. 先运行一次 DSH，完全退出后，双击 **Install.cmd**。
 3. 安装器完成预检、校验和备份后，再打开 DSH。
 4. 右上四角星打开设置；**OpenGallery.cmd** 打开你自己的图库，增删图片后重开藏镜刷新。
 
 普通使用不需要编辑 JSON/YAML，也不需要安装 npm 依赖。需要 Node.js 22.19+（22.x）或 24+；脚本优先找 DSH 自带运行时。
 Code → Download ZIP 是源码，主要给开发者；安装用户使用预先构建的安装包。
-公开候选不附待审画像，默认使用原创中性星空背景。个人完整版可使用本机已有的无损 WebP；这不表示已取得人物素材的再分发权。
-从源码下载时，先运行 `node tools/build.mjs` 生成本地清单，再运行安装器；第一次体验优先使用已打包的 core 候选。
+完整主题内置星穹书房、天才的房间、星间漫游三组画像，保留清晰/极清与深浅变体。`--core` 是不带画像的显式基础版选项，不作为默认交付。
+从源码下载时，先运行 `node tools/build.mjs` 生成本地清单，再运行安装器；第一次体验优先使用 Releases 中的完整主题安装包。
 
 ## 安全安装与移除
 
@@ -47,7 +47,7 @@ node --test tests/*.test.mjs
 node tools/verify.mjs
 node tools/preview.mjs
 node tools/release.mjs
-# 仅本机个人媒体包：node tools/release.mjs --personal
+# 可选基础版：node tools/release.mjs --core
 ~~~
 
 当前基准宿主为 Windows / DSH 0.2.1-rc.2。安装与模拟验收不等于重启后的实机验收；其他版本请先作为兼容性测试使用。
@@ -58,4 +58,4 @@ GitHub 第一次使用见 [Kshine 的发布步骤](docs/GITHUB-FIRST-STEPS.md)�
 本项目不代表 HoYoverse / miHoYo 或 DeepSeek 官方。作者有权授权的代码采用 **PolyForm Noncommercial 1.0.0**：限许可允许的非商业用途，分发时保留许可与 Kshine 的 Required Notice。独立原创框饰采用 **CC BY-NC-SA 4.0**；字体、可选开屏和角色美术分别见 [NOTICE](NOTICE.md)。
 
 这是**源码可用、非商业许可**的个人作品，不称为标准开源软件。AI 辅助制作、源码与成品的关系见 [源码与 AI 说明](docs/SOURCE-AND-AI.md)。
-官方 PV、第三方同人镜图、私人图库、旧聊天截图均不在分享包内。待审画像与含图演示截图也不进入公开候选。角色形象的相关权利不因项目代码许可证而转移。
+官方 PV、第三方同人镜图、私人图库、旧聊天截图均不在分享包内。三组由用户生成并确认的角色背景及主题演示截图随完整主题提供。角色形象的相关权利不因项目代码许可证而转移。

@@ -28,5 +28,5 @@ function walk(dir,rel=''){for(const e of fs.readdirSync(dir,{withFileTypes:true}
 }}
 walk(root);assert.deepEqual(forbiddenFiles,[],'Private/video/raster residue');
 const manifest=JSON.parse(fs.readFileSync(path.join(root,'release-manifest.json')));for(const e of manifest.files){const p=path.resolve(root,e.path);assert.ok(p.startsWith(path.resolve(root)+path.sep));assert.equal(crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex'),e.sha256,'Manifest drift '+e.path);}
-if(manifest.edition==='core')assert.ok(!manifest.files.some(e=>e.path.endsWith('.webp')||e.path.startsWith('docs/screenshots/')),'Core includes unreviewed media');
+if(manifest.edition==='core')assert.ok(!manifest.files.some(e=>e.path.endsWith('.webp')||e.path.startsWith('docs/screenshots/')),'Core includes portrait media');
 const report={version:pkg.version,readOnly:true,sourceTextFiles:textFiles,syntaxChecked:checked.length,manifestFiles:manifest.files.length,edition:manifest.edition,ownerPathsAbsent:true,userGalleryAndVideoAbsent:true,mediaRights:manifest.mediaRights,bundleTargetsPresent:true,bundleFresh:true};console.log(JSON.stringify(report,null,2));

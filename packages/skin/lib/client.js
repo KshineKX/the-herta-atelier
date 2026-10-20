@@ -412,7 +412,7 @@ function mount(doc = document, { base = '/herta-atelier/', storage = globalThis.
   brand.append(brandCaption);
   const version = doc.createElement('small');
   version.className = 'herta-build';
-  version.textContent = 'v0.4.0-beta.3 · Kshine';
+  version.textContent = 'v0.4.0-beta.4 · Kshine';
   panel.append(version);
   const nativeLayoutChanges = new Map();
 

@@ -12,5 +12,5 @@ for(const name of ['package.json','README.md','LICENSE','NOTICE.md','CHANGELOG.m
 }
 const art=files.filter(e=>e.path.endsWith('.webp')).length;if(art!==0&&art!==10)throw Error('Incomplete artwork set; expected 0 or 10 files');
 const version=JSON.parse(fs.readFileSync(path.join(root,'package.json'))).version;
-fs.writeFileSync(path.join(root,'release-manifest.json'),JSON.stringify({schemaVersion:1,project:'The Herta Atelier',author:'Kshine',version,edition:art===10?'personal':'core',mediaRights:art===10?'pending; personal use only':'no unreviewed raster media',testedDesktop:'0.2.1-rc.2',files},null,2)+'\n');
-console.log(JSON.stringify({built:version,edition:art===10?'personal':'core',runtimeFiles:files.length}));
+fs.writeFileSync(path.join(root,'release-manifest.json'),JSON.stringify({schemaVersion:1,project:'The Herta Atelier',author:'Kshine',version,edition:art===10?'theme':'core',mediaRights:art===10?'user-generated character artwork included at maintainer request':'core edition without portrait artwork',testedDesktop:'0.2.1-rc.2',files},null,2)+'\n');
+console.log(JSON.stringify({built:version,edition:art===10?'theme':'core',runtimeFiles:files.length}));
