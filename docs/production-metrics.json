@@ -1,0 +1,12 @@
+{
+  "as_of": "2026-10-26",
+  "version": "0.4.0-beta.11",
+  "currency": "CNY",
+  "video_generation_list_price_estimate": 192.0,
+  "actual_cash_paid": null,
+  "discounts_and_vouchers_verified": false,
+  "included_scenes": 3,
+  "delivered_clips": 13,
+  "delivered_duration_seconds": 102,
+  "estimate_scope": "Historical video generation and editing list-price estimate, including early rounds, probes and the extra seating-book revision. Excludes local postproduction, software development and acceptance work. Not total project cost or a claim that this spending was necessary for quality."
+}
