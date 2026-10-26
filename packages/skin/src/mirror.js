@@ -3,14 +3,15 @@ const MIRROR_BUILTINS = [];
 
 // Gallery files are kept in the browser, not sent to the host or a remote site.
 export function createMirror(doc, { base, onOpen = () => {}, onInfo = () => {} } = {}) {
-  let disposed = false, opened = false, loaded = false, index = 0, dbPromise;
+  let disposed = false, opened = false, loaded = false, index = 0, dbPromise, openRequest = 0;
   let album = MIRROR_BUILTINS.map(item => ({ ...item, src: base + item.file }));
   const objectURLs = new Set();
   const root = doc.createElement('div'); root.id = 'herta-atelier-mirror';
   const trigger = doc.createElement('button'); trigger.type = 'button'; trigger.className = 'herta-mirror-trigger';
-  trigger.setAttribute('aria-label', '打开大黑塔的藏镜'); trigger.setAttribute('aria-expanded', 'false');
-  const icon = doc.createElement('img'); icon.src = base + 'herta-mirror.svg'; icon.alt = ''; trigger.append(icon);
+  trigger.setAttribute('aria-label', '打开大黑塔的藏镜'); trigger.setAttribute('aria-expanded', 'false'); trigger.title='打开藏镜';
+  const icon = doc.createElement('img'); icon.src = base + 'herta-mirror-mark.svg'; icon.alt = ''; trigger.append(icon);
   const panel = doc.createElement('section'); panel.className = 'herta-mirror-panel'; panel.hidden = true;
+  panel.id='herta-mirror-gallery';trigger.setAttribute('aria-controls',panel.id);
   panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', '大黑塔的藏镜'); panel.setAttribute('aria-modal', 'false');
   const glass = doc.createElement('div'); glass.className = 'herta-mirror-glass';
   const picture = doc.createElement('img'); picture.alt = ''; picture.draggable = false;
@@ -20,7 +21,13 @@ export function createMirror(doc, { base, onOpen = () => {}, onInfo = () => {} }
   close.setAttribute('aria-label', '收起藏镜'); close.textContent = '×';
   const picker = doc.createElement('input'); picker.type = 'file'; picker.multiple = true; picker.hidden = true;
   picker.accept = 'image/png,image/jpeg,image/webp,image/avif';
-  panel.append(glass, close, picker);
+  const heading=doc.createElement('header');heading.className='herta-mirror-heading';
+  const title=doc.createElement('strong');title.textContent='私人藏镜';heading.append(title,close);
+  const footer=doc.createElement('footer');footer.className='herta-mirror-footer';
+  const previous=doc.createElement('button');previous.type='button';previous.textContent='‹';previous.setAttribute('aria-label','上一张藏镜图片');
+  const next=doc.createElement('button');next.type='button';next.textContent='›';next.setAttribute('aria-label','下一张藏镜图片');
+  const counter=doc.createElement('span');counter.setAttribute('aria-live','polite');counter.textContent='点击镜面换一幅';footer.append(previous,counter,next);
+  panel.append(heading, glass, footer, picker);
   root.append(trigger, panel); doc.body.append(root);
 
   function database() {
@@ -65,6 +72,8 @@ export function createMirror(doc, { base, onOpen = () => {}, onInfo = () => {} }
   }
   function render() {
     if (disposed) return;
+    previous.disabled=next.disabled=album.length<2;
+    counter.textContent=album.length ? (index%album.length+album.length)%album.length+1+' / '+album.length : '本地图库';
     if (!album.length) { picture.hidden = true; fallback.hidden = false; return; }
     index = ((index % album.length) + album.length) % album.length;
     const item = album[index];
@@ -76,23 +85,25 @@ export function createMirror(doc, { base, onOpen = () => {}, onInfo = () => {} }
     else picture.onload = reveal;
   }
   function hide(restoreFocus = false) {
+    ++openRequest;
     opened = false; panel.hidden = true; panel.removeAttribute('data-open');
     trigger.setAttribute('aria-expanded', 'false'); trigger.setAttribute('aria-label', '打开大黑塔的藏镜');
     if (restoreFocus) trigger.focus();
   }
   async function show() {
     if (disposed) return;
+    const request=++openRequest;
     onOpen(); opened = true; panel.hidden = false;
     trigger.setAttribute('aria-expanded', 'true'); trigger.setAttribute('aria-label', '收起大黑塔的藏镜');
     panel.removeAttribute('data-open'); void panel.offsetWidth; panel.setAttribute('data-open', '');
     if (!loaded) await hydrate();
+    if(disposed||!opened||request!==openRequest)return;
     try {
       const data = await refreshInfo();
-      if (disposed || !opened) return;
+      if (disposed || !opened || request!==openRequest) return;
       album = [...data.images.map(item => ({...item, folder:true})), ...album.filter(item => item.local)];
     } catch { album = album.filter(item => item.local); }
-    if (opened && !disposed) render();
-    close.focus();
+    if (opened && !disposed && request===openRequest) { render(); close.focus(); }
   }
   function random() {
     if (album.length < 2) return;
@@ -116,7 +127,9 @@ export function createMirror(doc, { base, onOpen = () => {}, onInfo = () => {} }
   picture.onerror = () => { picture.hidden = true; fallback.textContent='这张图片无法读取，点击镜面切换下一张'; fallback.hidden = false; };
   trigger.onclick = () => { if (opened) hide(); else void show(); };
   close.onclick = (event) => { event.stopPropagation(); hide(true); };
-  panel.onclick = () => random();
+  glass.onclick = () => random();
+  previous.onclick=event=>{event.stopPropagation();index--;render();};
+  next.onclick=event=>{event.stopPropagation();index++;render();};
   picker.onchange = async () => { const files = [...picker.files]; picker.value = ''; await addFiles(files); };
   panel.addEventListener('dragover', (event) => { event.preventDefault(); });
   panel.addEventListener('drop', async (event) => { event.preventDefault(); await addFiles([...event.dataTransfer.files]); });
@@ -124,12 +137,14 @@ export function createMirror(doc, { base, onOpen = () => {}, onInfo = () => {} }
   function keydown(event) {
     if (!opened) return;
     if (event.key === 'Escape') { event.preventDefault(); hide(true); }
-    else if (['ArrowLeft','ArrowRight'].includes(event.key)) { event.preventDefault(); index += event.key === 'ArrowLeft' ? -1 : 1; render(); }
+    else if (['ArrowLeft','ArrowRight'].includes(event.key) && panel.contains(doc.activeElement) && !event.altKey && !event.ctrlKey && !event.metaKey && !event.target.closest?.('input,textarea,select,[contenteditable=true]')) { event.preventDefault(); index += event.key === 'ArrowLeft' ? -1 : 1; render(); }
   }
+  function outside(event){if(opened&&!event.composedPath().includes(root)&&!event.composedPath().includes(trigger))hide();}
   doc.addEventListener('keydown', keydown);
+  doc.addEventListener('pointerdown',outside,true);
   return {
-    root, close: hide, refreshInfo,
+    root, trigger, close: hide, refreshInfo,
     setEnabled(enabled) { if (trigger.hidden !== !enabled) trigger.hidden = !enabled; if (!enabled && opened) hide(); },
-    dispose() { disposed = true; doc.removeEventListener('keydown', keydown); root.remove(); objectURLs.forEach(url => doc.defaultView.URL.revokeObjectURL(url)); objectURLs.clear(); dbPromise?.then(db => db.close()).catch(() => {}); },
+    dispose() { disposed = true; doc.removeEventListener('keydown', keydown); doc.removeEventListener('pointerdown',outside,true);trigger.remove();root.remove(); objectURLs.forEach(url => doc.defaultView.URL.revokeObjectURL(url)); objectURLs.clear(); dbPromise?.then(db => db.close()).catch(() => {}); },
   };
 }

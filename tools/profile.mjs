@@ -16,6 +16,12 @@ export function locations(options={}){
 }
 function ownedBlock(text){const a=text.indexOf(BEGIN);if(a<0)return null;const b=text.indexOf(END,a);if(b<0||text.indexOf(BEGIN,a+BEGIN.length)>=0)throw Error('Ambiguous managed YAML block');const end=b+END.length+(text.slice(b+END.length).startsWith('\r\n')?2:text[b+END.length]==='\n'?1:0);return {start:a,end,text:text.slice(a,end)};}
 function skinIds(text){return [...new Set([...text.matchAll(/^\s*-\s*id:\s*(ui-skin-[\w-]+)\s*$/gm)].map(m=>m[1]))].filter(id=>id!=='ui-skin-herta-atelier');}
+export function inspectPatch(text){
+ const counts=new Map();for(const m of text.matchAll(/^\s*-\s*id:\s*(ui-skin-[\w-]+)\s*$/gm))counts.set(m[1],(counts.get(m[1])||0)+1);
+ const entries=[...counts].map(([id,count])=>({id,count}));
+ const managedBlocks=[...text.matchAll(/^# BEGIN THE-HERTA-ATELIER MANAGED\s*$/gm)].length;
+ return {readOnly:true,managedBlocks,entries,duplicateIds:entries.filter(x=>x.count>1),legacyHertaEntries:managedBlocks===0?(counts.get('ui-skin-herta-atelier')||0):null,repairApplied:false};
+}
 export function makePlan(options={}){
  const loc=locations(options),source=path.resolve(options.sourceRoot||projectRoot),manifestFile=path.join(loc.profileDir,'package.json'),patchFile=path.join(loc.profileDir,'cordis.patch.yml');
  if(!fs.existsSync(manifestFile)||!fs.existsSync(patchFile))throw Error('DSH desktop profile not found. Start DSH once, or pass --dsh-home / --profile.');

@@ -1,6 +1,6 @@
 {
   "name": "dsh-herta-atelier",
-  "version": "0.4.0-beta.4",
+  "version": "0.4.0-beta.10",
   "description": "大黑塔 · 天才书房：紫黑与晨光双主题，银纹、紫花、宝石与钥匙的极繁主义皮肤。",
   "type": "module",
   "main": "lib/index.js",
@@ -25,7 +25,8 @@
     "cordis.patch.yml",
     "skin.json",
     "NOTICE.md",
-    "LICENSE"
+    "LICENSE",
+    "motion"
   ],
   "scripts": {
     "build": "node build.mjs"

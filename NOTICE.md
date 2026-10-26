@@ -24,3 +24,5 @@ HoYoverse 的[同人内容说明与完整指引入口](https://support.hoyoverse
 Required Notice: Copyright (c) 2026 Kshine. The Herta Atelier. https://github.com/KshineKX/the-herta-atelier
 
 项目是源码可用的非商业许可项目，不宣称符合 OSI 开源定义。限制只适用于作者有权许可的贡献；第三方 MIT/OFL 部分保留各自原有权利，不能将其改称禁止商用。
+
+本轮完整动态包另包含 Kshine 为本项目生成并选定的 13 段无声动作视频（102 秒）；与用户另行导入的私人视频分开。书房 1820×1138，另两场景 1212×758，30fps。部分素材保留 beta 待实机状态；角色相关权利仍归相应权利方，既有许可边界不变。

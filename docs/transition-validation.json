@@ -1,0 +1,159 @@
+{
+  "createdAt": "2026-10-22T02:25:38.969Z",
+  "environment": "Headless Edge local semantic preview, not native DSH",
+  "viewport": {
+    "width": 1985,
+    "height": 1248
+  },
+  "runs": {
+    "baseline": {
+      "cold": {
+        "elapsedMs": 710,
+        "paletteWrites": 943,
+        "frames": 40,
+        "p95Ms": 17,
+        "maxFrameMs": 50,
+        "over33": 1,
+        "changedTone": true,
+        "settled": true,
+        "layoutMoved": false,
+        "nodes": 146,
+        "viewTransitions": true
+      },
+      "warm": [
+        {
+          "elapsedMs": 727,
+          "paletteWrites": 1012,
+          "frames": 43,
+          "p95Ms": 17,
+          "maxFrameMs": 17,
+          "over33": 0,
+          "changedTone": true,
+          "settled": true,
+          "layoutMoved": false,
+          "nodes": 2307,
+          "viewTransitions": true
+        },
+        {
+          "elapsedMs": 731,
+          "paletteWrites": 897,
+          "frames": 38,
+          "p95Ms": 33,
+          "maxFrameMs": 33,
+          "over33": 5,
+          "changedTone": true,
+          "settled": true,
+          "layoutMoved": false,
+          "nodes": 2307,
+          "viewTransitions": true
+        },
+        {
+          "elapsedMs": 719,
+          "paletteWrites": 1012,
+          "frames": 43,
+          "p95Ms": 17,
+          "maxFrameMs": 18,
+          "over33": 0,
+          "changedTone": true,
+          "settled": true,
+          "layoutMoved": false,
+          "nodes": 2307,
+          "viewTransitions": true
+        }
+      ],
+      "errors": []
+    },
+    "work": {
+      "cold": {
+        "elapsedMs": 754,
+        "paletteWrites": 23,
+        "frames": 44,
+        "p95Ms": 17,
+        "maxFrameMs": 33,
+        "over33": 1,
+        "changedTone": true,
+        "settled": true,
+        "layoutMoved": false,
+        "nodes": 146,
+        "viewTransitions": true
+      },
+      "warm": [
+        {
+          "elapsedMs": 742,
+          "paletteWrites": 23,
+          "frames": 44,
+          "p95Ms": 17,
+          "maxFrameMs": 33,
+          "over33": 1,
+          "changedTone": true,
+          "settled": true,
+          "layoutMoved": false,
+          "nodes": 2307,
+          "viewTransitions": true
+        },
+        {
+          "elapsedMs": 748,
+          "paletteWrites": 23,
+          "frames": 44,
+          "p95Ms": 17,
+          "maxFrameMs": 33,
+          "over33": 1,
+          "changedTone": true,
+          "settled": true,
+          "layoutMoved": false,
+          "nodes": 2307,
+          "viewTransitions": true
+        },
+        {
+          "elapsedMs": 990,
+          "paletteWrites": 23,
+          "frames": 43,
+          "p95Ms": 17,
+          "maxFrameMs": 300,
+          "over33": 1,
+          "changedTone": true,
+          "settled": true,
+          "layoutMoved": false,
+          "nodes": 2307,
+          "viewTransitions": true
+        }
+      ],
+      "errors": [],
+      "reduced": {
+        "elapsedMs": 0,
+        "paletteWrites": 23,
+        "frames": 0,
+        "p95Ms": 0,
+        "maxFrameMs": 0,
+        "over33": 0,
+        "changedTone": true,
+        "settled": true,
+        "layoutMoved": false,
+        "nodes": 2307,
+        "viewTransitions": true
+      },
+      "fallback": {
+        "elapsedMs": 1,
+        "paletteWrites": 23,
+        "frames": 0,
+        "p95Ms": 0,
+        "maxFrameMs": 0,
+        "over33": 0,
+        "changedTone": true,
+        "settled": true,
+        "layoutMoved": false,
+        "nodes": 2307,
+        "viewTransitions": false
+      },
+      "rapid": {
+        "settled": true,
+        "busy": false
+      },
+      "restoration": {
+        "stageRemoved": true,
+        "controlsRemoved": true,
+        "externalChangePreserved": true
+      }
+    }
+  }
+}

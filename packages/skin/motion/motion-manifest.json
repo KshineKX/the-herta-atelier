@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "clips": {
+    "home-idle": {
+      "file": "home-idle/video.mp4",
+      "duration": 8,
+      "sha256": "e7720c77cd958a94adfd2c6a2c6beb57889503e29aba36967a814d8f92f5741c",
+      "reviewStatus": "原位待机，保留在已审阅闭环中",
+      "resolution": "1820x1138"
+    },
+    "home-rise": {
+      "file": "home-rise/video.mp4",
+      "duration": 8,
+      "sha256": "1be2046e69b4d37e7052ef8240dff58fa77b6e63777a67498d21ec22a4f28fd0",
+      "reviewStatus": "作者认可",
+      "resolution": "1820x1138"
+    },
+    "home-exit": {
+      "file": "home-exit/video.mp4",
+      "duration": 8,
+      "sha256": "4de3451d775c7e55958a931119974cdce90f32d07bfa91820d7ed5b278c8212b",
+      "reviewStatus": "作者认可",
+      "resolution": "1820x1138"
+    },
+    "home-enter": {
+      "file": "home-enter/video.mp4",
+      "duration": 8,
+      "sha256": "f64e795c150d3e94e5a0fc10bc6742accaea8f613a095d50a92404a20d73efa8",
+      "reviewStatus": "作者认可",
+      "resolution": "1820x1138"
+    },
+    "home-sit": {
+      "file": "home-sit/video.mp4",
+      "duration": 8,
+      "sha256": "d52e86b6673ab51c5ee85c209a33d43d0859caceb650c3dbca327716ce614e54",
+      "reviewStatus": "书本连续性修订，作者认可；禁止使用原S",
+      "resolution": "1820x1138"
+    },
+    "campus-idle": {
+      "file": "campus-idle/video.mp4",
+      "duration": 8,
+      "sha256": "9f23cd87d362e0f9c36e4985894bf34ceddc182f6aca1e261662714f921760a9",
+      "reviewStatus": "嘴部角度校正版，作者回复“没问题了”；禁止用初次修补版",
+      "resolution": "1212x758"
+    },
+    "campus-greet": {
+      "file": "campus-greet/video.mp4",
+      "duration": 6,
+      "sha256": "f1265c2582ec6dcc91d8f9d549940bfa31ca9f85763f496f5eda3220239cec33",
+      "reviewStatus": "现成素材，随beta实机复核",
+      "resolution": "1212x758"
+    },
+    "campus-reset": {
+      "file": "campus-reset/video.mp4",
+      "duration": 6,
+      "sha256": "b0157a1aa4812f48e049babd8e453ca5af9d948d68094b31584dafd19326b2fc",
+      "reviewStatus": "现有闭嘴修补版，随beta实机复核",
+      "resolution": "1212x758"
+    },
+    "room-idle": {
+      "file": "room-idle/video.mp4",
+      "duration": 8,
+      "sha256": "06ff6dbe07d9c2ddf6a36ead638041fe0bf3d39b40c89752fa931cc6b331f2ac",
+      "reviewStatus": "闭嘴修补方法此前获认可，随beta实机复核",
+      "resolution": "1212x758"
+    },
+    "room-roll": {
+      "file": "room-roll/video.mp4",
+      "duration": 12,
+      "sha256": "dd4febe0c4fb98d2701882a7b6a09100726d692d791a1cbcb9412022512e87a2",
+      "reviewStatus": "翻转嘴部定位修正版；不要用有双嘴残影的首版",
+      "resolution": "1212x758"
+    },
+    "room-roll-reset": {
+      "file": "room-roll-reset/video.mp4",
+      "duration": 10,
+      "sha256": "abd214f2c20d1b4b0a46f5f502d1d2ddecd7e7635a2767dd8af18a33d6f5510e",
+      "reviewStatus": "现成素材，随beta实机复核",
+      "resolution": "1212x758"
+    },
+    "room-tilt": {
+      "file": "room-tilt/video.mp4",
+      "duration": 6,
+      "sha256": "1a1c3b3394cd3550988f08bf389f1868b2263fd8eae4acb63ae807e782ee4eec",
+      "reviewStatus": "现有闭嘴修补版，随beta实机复核",
+      "resolution": "1212x758"
+    },
+    "room-tilt-reset": {
+      "file": "room-tilt-reset/video.mp4",
+      "duration": 6,
+      "sha256": "06f93a7c335ffcd86550ff87080573f67eb015bc86873192d38a043c6d50c263",
+      "reviewStatus": "现有闭嘴修补版，随beta实机复核",
+      "resolution": "1212x758"
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "version": "0.4.0-beta.7",
+  "method": "Independent browser, original ultra artwork, pixel readback at 1985x1248, not native visual acceptance",
+  "before": {
+    "selectedQuality": "ultra",
+    "viewport": [
+      1985,
+      1248
+    ],
+    "canvas": [
+      1985,
+      1248
+    ],
+    "hidden": false,
+    "reduced": false,
+    "frames": [
+      2,
+      37
+    ],
+    "animationTime": [
+      0.10000000149011612,
+      1.683500051498413
+    ],
+    "changedPixels": 72299,
+    "maxChannelDelta": 232,
+    "meanChannelDelta": 1.08632007685849,
+    "changedBoundsGL": [
+      1059,
+      99,
+      1852,
+      1169
+    ],
+    "drawRect": [
+      0,
+      0,
+      1995.290283203125,
+      1248
+    ],
+    "visible": "visible",
+    "display": "block",
+    "textureLimit": 16384
+  },
+  "after": {
+    "selectedQuality": "ultra",
+    "viewport": [
+      1985,
+      1248
+    ],
+    "canvas": [
+      1985,
+      1248
+    ],
+    "hidden": false,
+    "reduced": false,
+    "frames": [
+      2,
+      36
+    ],
+    "animationTime": [
+      0.10000000149011612,
+      1.6332000494003296
+    ],
+    "changedPixels": 137339,
+    "maxChannelDelta": 252,
+    "meanChannelDelta": 2.4371702028030744,
+    "changedBoundsGL": [
+      1042,
+      70,
+      1863,
+      1176
+    ],
+    "drawRect": [
+      0,
+      0,
+      1995.290283203125,
+      1248
+    ],
+    "visible": "visible",
+    "display": "block",
+    "textureLimit": 16384
+  },
+  "cameraNote": "Changed pixels confined to local subject masks; no whole-scene pan or zoom",
+  "userAcceptance": "Pending",
+  "fullActions": "Not implemented; five keyframes remain reference material"
+}

@@ -32,3 +32,7 @@ node tools/manage.mjs gallery --set "你的图库绝对路径" --apply
 
 ImportVideo.cmd 只复制你选择的个人视频，不下载素材、不转码。InstallWithBoot.cmd 检查有无视频，以及随包固定的 MIT schema 依赖是否完整。
 通过后，开屏代码与视频目录分离，升级不会覆盖视频。已有可选开屏的受管安装会在普通升级中保留。
+
+## beta.10 完整动态包
+
+Install.cmd 联合安装代码与随包的 13 段视频，不需要开发机或本地预览服务。安装前完全退出 DSH。Rollback.cmd 恢复本次升级前的 profile、链接和视频目录；若升级后用户改动这些受管内容会拒绝覆盖。Uninstall.cmd 恢复首次安装前的配置，保留个人图库、开屏和备份。不要先卸载再执行本次回退。

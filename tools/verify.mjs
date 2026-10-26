@@ -13,8 +13,10 @@ for(const [folder,p] of [['skin',skin],['boot',boot]]){
  for(const name of p.files)assert.ok(fs.existsSync(path.join(base,name)),'Missing packaged target '+folder+'/'+name);
 }
 const source=fs.readFileSync(path.join(root,'packages/skin/src/client.js'),'utf8'),mirror=fs.readFileSync(path.join(root,'packages/skin/src/mirror.js'),'utf8').replace(/^export /gm,'');
-const body=source.replace(/^import \{ createMirror \} from '\.\/mirror\.js';\r?\n/m,'').replace(/^export /gm,'');
-const expected="window.__ModuleLoader__.load({id:'dsh-herta-atelier',factory:function(require){\nconst module={exports:{}};const exports=module.exports;\n"+mirror+'\n'+body+"\nObject.assign(exports,{apply});return module.exports;\n}});\n";
+const motion=fs.readFileSync(path.join(root,'packages/skin/src/motion.js'),'utf8').replace(/^export /gm,'');
+const dock=fs.readFileSync(path.join(root,'packages/skin/src/dock.js'),'utf8').replace(/^export /gm,'');
+const body=source.replace(/^import \{ createMirror \} from '\.\/mirror\.js';\r?\n/m,'').replace(/^import \{ createIdleMotion \} from '\.\/motion\.js';\r?\n/m,'').replace(/^import \{ createToolDock \} from '\.\/dock\.js';\r?\n/m,'').replace(/^export /gm,'');
+const expected="window.__ModuleLoader__.load({id:'dsh-herta-atelier',factory:function(require){\nconst module={exports:{}};const exports=module.exports;\n"+mirror+'\n'+motion+'\n'+dock+'\n'+body+"\nObject.assign(exports,{apply});return module.exports;\n}});\n";
 assert.equal(fs.readFileSync(path.join(root,'packages/skin/lib/client.js'),'utf8'),expected,'Stale skin bundle');assert.ok(source.includes('v'+pkg.version));
 const forbidden=['qq'+'-bridge','guest'+'-workspace','mirror'+'-portrait-sole','ref'+'-dragon','herta-pv'+'-native-1080p.mp4'];
 let textFiles=0;const forbiddenFiles=[];const checked=[];
@@ -24,7 +26,7 @@ function walk(dir,rel=''){for(const e of fs.readdirSync(dir,{withFileTypes:true}
  if(/\.(?:mjs|js)$/.test(e.name)){const run=spawnSync(process.execPath,['--check',p],{windowsHide:true,encoding:'utf8'});assert.equal(run.status,0,run.stderr);checked.push(r);}
  if(/\.(?:cmd|ps1)$/.test(e.name))assert.ok([...s].every(c=>c.charCodeAt(0)<128),'Windows bootstrap must remain ASCII: '+r);
  textFiles++;
- }else if(/\.(?:mp4|mov|webm|jpg|jpeg)$/.test(e.name)&&!r.startsWith('docs/screenshots/'))forbiddenFiles.push(r);
+ }else if(/\.(?:mp4|mov|webm|jpg|jpeg)$/.test(e.name)&&!r.startsWith('docs/screenshots/')&&!/^packages\/skin\/motion\/[a-z-]+\/video\.mp4$/.test(r))forbiddenFiles.push(r);
 }}
 walk(root);assert.deepEqual(forbiddenFiles,[],'Private/video/raster residue');
 const manifest=JSON.parse(fs.readFileSync(path.join(root,'release-manifest.json')));for(const e of manifest.files){const p=path.resolve(root,e.path);assert.ok(p.startsWith(path.resolve(root)+path.sep));assert.equal(crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex'),e.sha256,'Manifest drift '+e.path);}

@@ -1,6 +1,6 @@
-import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';import {registerGallery} from './gallery.js';
+import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';import {registerGallery} from './gallery.js';import {registerMotion} from './motion.js';
 const folder=fileURLToPath(new URL('../assets/',import.meta.url));
-export const ASSETS=['herta-mirror.svg','herta-symbol.svg','herta-wordmark.svg','herta-wordmark-on-light.svg','herta-wordmark-plaque.svg','herta-serif-title.ttf','ornament-corner.svg','ornament-crest.svg','ornament-divider.svg','ornament-damask.svg','ornament-key.svg','neutral-background.svg',
+export const ASSETS=['herta-mirror.svg','herta-mirror-mark.svg','herta-view.svg','herta-focus.svg','herta-symbol.svg','herta-wordmark.svg','herta-wordmark-on-light.svg','herta-wordmark-plaque.svg','herta-serif-title.ttf','ornament-corner.svg','ornament-crest.svg','ornament-divider.svg','ornament-damask.svg','ornament-key.svg','neutral-background.svg',
   ...['home-dark','home-light'].flatMap(n=>['soft','crisp','ultra'].map(q=>'art-'+n+'-'+q+'.webp')),
   ...['room','campus'].flatMap(n=>['soft','ultra'].map(q=>'art-'+n+'-'+q+'.webp'))];
 export const name='ui-skin-herta-atelier';
@@ -14,4 +14,4 @@ export function registerAssets(register,{base='/herta-atelier/'}={}) {
     headers['Content-Length']=String(end-start+1);res.writeHead(status,headers);if(req.method==='HEAD'){res.end();return;}const stream=fs.createReadStream(file,{start,end});stream.on('error',()=>res.destroy());res.on('close',()=>stream.destroy());stream.pipe(res);
   }});
 }
-export function apply(root){root.inject(['webServer'],ctx=>{const register=route=>ctx.effect(()=>ctx.webServer.register(route),'herta:'+route.path);registerAssets(register);registerGallery(register);});}
+export function apply(root){root.inject(['webServer'],ctx=>{const register=route=>ctx.effect(()=>ctx.webServer.register(route),'herta:'+route.path);registerAssets(register);registerGallery(register);registerMotion(register);});}

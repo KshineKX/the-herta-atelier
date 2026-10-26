@@ -7,7 +7,7 @@ const files=[];
 function walk(dir,rel=''){for(const e of fs.readdirSync(dir,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name))){if((e.name==='node_modules'&&!rel.endsWith('/vendor'))||e.name.startsWith('.'))continue;const p=rel?rel+'/'+e.name:e.name,full=path.join(dir,e.name);if(e.isDirectory())walk(full,p);else if(e.isFile())files.push({path:p,bytes:fs.statSync(full).size,sha256:crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex')});}}
 for(const pkg of ['skin','boot'])walk(path.join(root,'packages',pkg),'packages/'+pkg);
 for(const dir of ['tools','tests','docs','.github'])if(fs.existsSync(path.join(root,dir)))walk(path.join(root,dir),dir);
-for(const name of ['package.json','README.md','LICENSE','NOTICE.md','CHANGELOG.md','AGENTS.md','CONTRIBUTING.md','SECURITY.md','SUPPORT.md','.gitignore','.gitattributes','Install.cmd','InstallWithBoot.cmd','Uninstall.cmd','Check.cmd','OpenGallery.cmd','ImportVideo.cmd']){
+for(const name of ['package.json','README.md','LICENSE','NOTICE.md','CHANGELOG.md','AGENTS.md','CONTRIBUTING.md','SECURITY.md','SUPPORT.md','.gitignore','.gitattributes','Install.cmd','InstallWithBoot.cmd','Uninstall.cmd','Check.cmd','OpenGallery.cmd','ImportVideo.cmd','Rollback.cmd']){
   const full=path.join(root,name);if(fs.existsSync(full))files.push({path:name,bytes:fs.statSync(full).size,sha256:crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex')});
 }
 const art=files.filter(e=>e.path.endsWith('.webp')).length;if(art!==0&&art!==10)throw Error('Incomplete artwork set; expected 0 or 10 files');

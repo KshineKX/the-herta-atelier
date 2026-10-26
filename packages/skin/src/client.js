@@ -1,6 +1,9 @@
 import { createMirror } from './mirror.js';
+import { createIdleMotion } from './motion.js';
+import { createToolDock } from './dock.js';
 const KEY = 'herta-atelier:v1';
-const DEFAULTS = { opacity: 0.9, scene: 'auto', theme: 'auto', art: 'ultra', mirror: true, reading: true };
+export const THEME_TRANSITION_MS = 700;
+const DEFAULTS = { opacity: 0.9, scene: 'auto', theme: 'auto', art: 'ultra', mirror: true, displayMode: 'admire', motion: 'static' };
 const COPY_MAP = new Map([
   ['探索未至之境', '群星静默如谜'],
   ['给 DeepSeek 发消息', '向大黑塔提问…'],
@@ -17,7 +20,8 @@ export function sanitize(value = {}) {
     theme: THEMES.includes(value.theme) ? value.theme : DEFAULTS.theme,
     art: ['soft','crisp','ultra'].includes(value.art) ? value.art : 'ultra',
     mirror: value.mirror !== false,
-    reading: value.reading !== false,
+    displayMode: ['admire','focus'].includes(value.displayMode) ? value.displayMode : DEFAULTS.displayMode,
+    motion: value.motion === 'dynamic' ? 'dynamic' : 'static',
   };
 }
 
@@ -115,6 +119,8 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
   try { settings = sanitize(JSON.parse(storage.getItem(KEY) || '{}')); } catch { settings = { ...DEFAULTS }; }
 
   const body = doc.body;
+  // Discard the retired layout switch, including attributes left by a hot reload.
+  body.removeAttribute('data-herta-reading');
   const copyChanges = new Map();
   const placeholderChanges = new Map();
   const sloganChanges = new Map();
@@ -129,31 +135,21 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
   const shellProperties = [...Object.keys(palettes).map(name => '--'+name),'--herta-theme-mix'];
   const shellBefore = new Map(shellProperties.map(name => [name,{value:body.style.getPropertyValue(name),priority:body.style.getPropertyPriority(name)}]));
   const shellAfter = new Map();
-  let shellTone, shellFrame = 0, paletteEnd = 0;
-  function rgba(value) {
-    value = value.trim();
-    if (value.startsWith('#')) { let h=value.slice(1);if(h.length===3)h=[...h].map(x=>x+x).join('');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16),h.length===8?parseInt(h.slice(6,8),16)/255:1]; }
-    const c=value.match(/[\d.]+/g)?.map(Number);return c?.length>=3?[c[0],c[1],c[2],c[3]??1]:null;
-  }
+  let shellTone;
   function syncShellPalette(tone) {
-    if (tone===shellTone) return;
-    const first=shellTone==null; shellTone=tone;
-    doc.defaultView.cancelAnimationFrame(shellFrame);clearTimeout(paletteEnd);
-    const side=tone==='light'?1:0,style=doc.defaultView.getComputedStyle(body);
-    const pairs=Object.entries(palettes).map(([name,values])=>{const to=rgba(values[side]);return ['--'+name,rgba(style.getPropertyValue('--'+name))||to,to];});
-    const mixFrom=parseFloat(style.getPropertyValue('--herta-theme-mix'));
-    const from=Number.isFinite(mixFrom)?mixFrom:side;
-    const paint=p=>{
-      for(const [name,a,b] of pairs){const channels=b.map((x,i)=>i===3?+(a[i]+(x-a[i])*p).toFixed(4):Math.round(a[i]+(x-a[i])*p));const value='rgba('+channels.join(',')+')';body.style.setProperty(name,value,'important');shellAfter.set(name,body.style.getPropertyValue(name));}
-      body.style.setProperty('--herta-theme-mix',String(from+(side-from)*p),'important');shellAfter.set('--herta-theme-mix',body.style.getPropertyValue('--herta-theme-mix'));
-      body.dataset.hertaPalette=p===1?'settled':'changing';if(p===1)clearTimeout(paletteEnd);
-    };
-    if(first||doc.defaultView.matchMedia('(prefers-reduced-motion: reduce)').matches){paint(1);return;}
-    const began=doc.defaultView.performance.now();
-    const step=now=>{if(stopped)return;const t=Math.min(1,Math.max(0,(now-began)/700));paint(t*t*(3-2*t));if(t<1)shellFrame=doc.defaultView.requestAnimationFrame(step);};
-    body.dataset.hertaPalette='changing';
-    paletteEnd=setTimeout(()=>{if(!stopped){doc.defaultView.cancelAnimationFrame(shellFrame);paint(1);}},750);
-    shellFrame=doc.defaultView.requestAnimationFrame(step);
+    if (tone === shellTone) return;
+    shellTone = tone;
+    const side = tone === 'light' ? 1 : 0;
+    // Apply the final palette once. A root snapshot fade animates its pixels;
+    // inherited custom properties are never rewritten on every frame.
+    for (const [name, values] of Object.entries(palettes)) {
+      const property = '--' + name;
+      body.style.setProperty(property, values[side], 'important');
+      shellAfter.set(property, body.style.getPropertyValue(property));
+    }
+    body.style.setProperty('--herta-theme-mix', String(side), 'important');
+    shellAfter.set('--herta-theme-mix', body.style.getPropertyValue('--herta-theme-mix'));
+    if (!body.hasAttribute('data-herta-transition')) body.dataset.hertaPalette = 'settled';
   }
   const nativeThemeDark = body.hasAttribute('data-ds-dark-theme');
   if (settings.theme === 'light' || settings.theme === 'dark') body.toggleAttribute('data-ds-dark-theme', settings.theme === 'dark');
@@ -177,6 +173,7 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
 
   const controls = doc.createElement('div');
   controls.id = 'herta-atelier-controls';
+  let toolDock;
   const ornamentalFrame = doc.createElement('div');
   ornamentalFrame.id = 'herta-atelier-frame';
   ornamentalFrame.setAttribute('aria-hidden', 'true');
@@ -191,6 +188,10 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
   const themeButton = doc.createElement('button');
   themeButton.id = 'herta-atelier-theme';
   themeButton.type = 'button';
+
+  const viewButton = doc.createElement('button');
+  viewButton.id = 'herta-atelier-view'; viewButton.type = 'button';
+  const viewIcon = image('herta-view.svg', ''); viewButton.append(viewIcon);
 
   const open = doc.createElement('button');
   open.append(image('herta-symbol.svg', ''));
@@ -224,6 +225,13 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
     theme.append(option);
   }
   row('深浅外观', theme);
+  const displayMode = doc.createElement('select'); displayMode.id='herta-display-mode';
+  for (const [value,text] of [['admire','观赏模式'],['focus','专注模式']]) { const option=doc.createElement('option');option.value=value;option.textContent=text;displayMode.append(option); }
+  row('显示模式', displayMode);
+  const motionMode=doc.createElement('select');motionMode.id='herta-motion-mode';
+  for(const [value,text]of [['static','静态'],['dynamic','动态']]){const option=doc.createElement('option');option.value=value;option.textContent=text;motionMode.append(option);}
+  row('立绘模式',motionMode);
+  const motionStatus=doc.createElement('small');motionStatus.id='herta-motion-status';motionStatus.setAttribute('role','status');motionStatus.setAttribute('aria-live','polite');motionStatus.style.margin='-4px 0 12px';motionStatus.textContent='静态画像';panel.append(motionStatus);
 
   const artDetail = doc.createElement('select');
   for (const [value, text] of [['ultra', '极清 · AI 4×超分'], ['crisp', '清晰 · 细节修复'], ['soft', '柔和 · 原画氛围']]) {
@@ -240,8 +248,7 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
   row('背景强度', opacity);
 
   const mirrorToggle = doc.createElement('input'); mirrorToggle.type = 'checkbox';
-  row('藏镜挂件', mirrorToggle);
-  const readingToggle = doc.createElement('input');readingToggle.type='checkbox';row('阅读保护',readingToggle);
+  row('藏镜入口', mirrorToggle);
 
   const scene = doc.createElement('select');
   for (const [value, text] of [['auto', '随页面切换'], ['home', '星穹 · 天才书房'], ['chat', '课间 · 星间漫游'], ['settings', '私室 · 天才的房间']]) {
@@ -253,13 +260,13 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
   row('画像场景', scene);
 
   const source = doc.createElement('small');
-  source.textContent = '三幅画像 · 阅读保护\n图库路径将在打开藏镜时显示';
+  source.textContent = '观赏保留画像 · 专注增强正文\n藏镜由工具栏按需打开';
   panel.append(source);
 
   const close = doc.createElement('button');
   close.textContent = '收起';
   panel.append(close);
-  controls.append(themeButton, open, panel);
+  controls.append(themeButton, viewButton, open, panel);
 
   const brand = doc.createElement('div');
   brand.id = 'herta-atelier-brand';
@@ -275,7 +282,7 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
   brand.append(brandCaption);
   const version = doc.createElement('small');
   version.className = 'herta-build';
-  version.textContent = 'v0.4.0-beta.4 · Kshine';
+  version.textContent = 'v0.4.0-beta.10 · Kshine';
   panel.append(version);
   const nativeLayoutChanges = new Map();
 
@@ -333,11 +340,18 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
     set(controls, 'top', real ? (contentTop + 12) + 'px' : null);
     set(controls, 'right', real ? '20px' : null);
     set(ornamentalFrame, 'top', real ? (contentTop + 6) + 'px' : null);
+    toolDock?.position();
   }
 
 
   body.append(stage, ornamentalFrame, controls);
-  const mirror = createMirror(doc, { base, onInfo(info) { source.textContent = '三幅画像 · 阅读保护\n图库：'+info.directory+'\n增删后重新打开藏镜刷新'; }, onOpen() { panel.hidden = true; open.setAttribute('aria-expanded','false'); } });
+  const mirror = createMirror(doc, { base, onInfo(info) { source.textContent = '观赏 / 专注 · 藏镜按需打开\n图库：'+info.directory+'\n增删后重新打开藏镜刷新'; }, onOpen() { panel.hidden = true; open.setAttribute('aria-expanded','false'); } });
+
+  controls.insertBefore(mirror.trigger, open);
+  toolDock=createToolDock(doc,controls,panel,{onCollapse(){panel.hidden=true;open.setAttribute('aria-expanded','false');mirror.close()}});
+  const actionGroup=doc.createElement('div');actionGroup.id='herta-motion-actions';actionGroup.setAttribute('role','group');actionGroup.setAttribute('aria-label','场景动作');panel.insertBefore(actionGroup,source);let actionSignature='';
+  function renderActions(){const actions=idleMotion.availableActions();const signature=JSON.stringify([settings.motion,actions]);if(signature===actionSignature)return;actionSignature=signature;actionGroup.hidden=settings.motion!=='dynamic';actionGroup.replaceChildren();for(const action of actions){const button=doc.createElement('button');button.type='button';button.textContent=action.label;button.dataset.hertaAction=action.id;button.disabled=action.disabled;button.onclick=()=>void idleMotion.trigger(action.id);actionGroup.append(button);}}
+  const idleMotion=createIdleMotion(doc,stage,()=>{motionMode.title='动态素材不可用，已保持静态画像';},status=>{const labels={static:'静态画像',loading:'正在准备动态画像…',playing:'自然待机',action:'动作播放中',away:'已离席 · 点击回来','paused-transition':'外观切换中','paused-hidden':'窗口不可见，动态已暂停','paused-reduced':'系统已启用减少动画，动态已暂停','unavailable-scene':'当前场景尚未接入动态，显示静态画像',unavailable:'动态素材未安装或不可用，显示静态画像'};motionStatus.textContent=labels[status]||labels.static;motionMode.title=motionStatus.textContent;renderActions();});
 
   const heroSymbols = new Map();
   const decoratedSurfaces = new Map();
@@ -345,10 +359,66 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
   const headerHosts = new Set();
   let stopped = false;
   let artCleanup, themeCleanup, themeTransition, themeRequest = 0, artCleanupKey = '';
+  const decodedArtwork = new Map();
+  function warmArtwork(file) {
+    if (decodedArtwork.has(file)) return decodedArtwork.get(file).ready;
+    const image = new doc.defaultView.Image(); image.src = base + file;
+    const ready = image.decode ? image.decode().catch(() => {}) : Promise.resolve();
+    decodedArtwork.set(file, { image, ready });
+    while (decodedArtwork.size > 2) decodedArtwork.delete(decodedArtwork.keys().next().value);
+    return ready;
+  }
   let queued = false;
   let frame = 0;
   let observedSidebar = null;
   const layoutObserver = doc.defaultView.ResizeObserver ? new doc.defaultView.ResizeObserver(schedule) : null;
+
+  function syncAppearance(current = body.dataset.hertaScene || (settings.scene === 'auto' ? chooseScene(doc) : settings.scene)) {
+    if (stopped) return;
+    const nativeDark = body.hasAttribute('data-ds-dark-theme');
+    const tone = chooseTone(current, nativeDark);
+    body.dataset.hertaTone = tone;
+    syncShellPalette(tone);
+    body.dataset.hertaScene = current;
+    for (const [id, file] of ART) {
+      const layer = layers.get(id);
+      // Decode only the active scene: three AI enlarged backgrounds are large.
+      if (!id.startsWith(current + '-')) {
+        continue;
+      }
+      const selectedFile = artworkFile(file, settings.art);
+      void warmArtwork(selectedFile);
+      if (layer.dataset.hertaFile !== selectedFile) {
+        layer.style.backgroundImage = `url("${base}${selectedFile}")`;
+        layer.dataset.hertaFile = selectedFile;
+      }
+    }
+    const cleanupKey = current + '-' + settings.art;
+    if (cleanupKey !== artCleanupKey) {
+      artCleanupKey = cleanupKey;
+      clearTimeout(artCleanup);
+      artCleanup = setTimeout(() => { for (const [id, layer] of layers) if (!id.startsWith(body.dataset.hertaScene + '-')) { layer.style.backgroundImage = 'none'; delete layer.dataset.hertaFile; } }, 1500);
+    }
+    stage.style.setProperty('--herta-art-opacity', settings.opacity);
+    motionMode.value=settings.motion;
+    const activeArt=layers.get(current+'-'+tone);
+    idleMotion.update({enabled:settings.motion==='dynamic',suspended:body.hasAttribute('data-herta-transition'),manifestUrl:base+'motion-manifest.json',scene:current,opacity:settings.opacity});renderActions();
+    themeButton.textContent = nativeDark ? '☀' : '☾';
+    themeButton.title = nativeDark ? '切换到浅色外观' : '切换到深色外观';
+    themeButton.setAttribute('aria-label', themeButton.title);
+    theme.value = settings.theme;
+    scene.value = settings.scene;
+    body.dataset.hertaView = settings.displayMode;
+    displayMode.value = settings.displayMode;
+    viewButton.title = settings.displayMode === 'focus' ? '专注模式 · 点击切换到观赏模式' : '观赏模式 · 点击切换到专注模式';
+    viewButton.setAttribute('aria-label', viewButton.title);
+    viewButton.setAttribute('aria-pressed', String(settings.displayMode === 'focus'));
+    const iconFile = settings.displayMode === 'focus' ? 'herta-focus.svg' : 'herta-view.svg';
+    if (viewIcon.dataset.file !== iconFile) { viewIcon.src = base + iconFile; viewIcon.dataset.file = iconFile; }
+    artDetail.value = settings.art;
+    mirrorToggle.checked = settings.mirror;
+    mirror.setEnabled(settings.mirror);
+  }
 
   function sync() {
     if (stopped) return;
@@ -430,39 +500,7 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
       if(header){header.dataset.hertaHeader='';headerHosts.add(header);}
     }
     for(const header of headerHosts)if(!header.isConnected)headerHosts.delete(header);
-    const nativeDark = body.hasAttribute('data-ds-dark-theme');
-    const tone = chooseTone(current, nativeDark);
-    body.dataset.hertaTone = tone;
-    syncShellPalette(tone);
-    body.dataset.hertaScene = current;
-    for (const [id, file] of ART) {
-      const layer = layers.get(id);
-      // Decode only the active scene: three AI enlarged backgrounds are large.
-      if (id !== current + '-' + tone) {
-        continue;
-      }
-      const selectedFile = artworkFile(file, settings.art);
-      if (layer.dataset.hertaFile !== selectedFile) {
-        layer.style.backgroundImage = `url("${base}${selectedFile}")`;
-        layer.dataset.hertaFile = selectedFile;
-      }
-    }
-    const cleanupKey = current + '-' + tone + '-' + settings.art;
-    if (cleanupKey !== artCleanupKey) {
-      artCleanupKey = cleanupKey;
-      clearTimeout(artCleanup);
-      artCleanup = setTimeout(() => { for (const [id, layer] of layers) if (id !== body.dataset.hertaScene + '-' + body.dataset.hertaTone) { layer.style.backgroundImage = 'none'; delete layer.dataset.hertaFile; } }, 1500);
-    }
-    stage.style.setProperty('--herta-art-opacity', settings.opacity);
-    themeButton.textContent = nativeDark ? '☀' : '☾';
-    themeButton.title = nativeDark ? '切换到浅色外观' : '切换到深色外观';
-    themeButton.setAttribute('aria-label', themeButton.title);
-    theme.value = settings.theme;
-    scene.value = settings.scene;
-    artDetail.value = settings.art;
-    mirrorToggle.checked = settings.mirror;
-    readingToggle.checked = settings.reading;body.dataset.hertaReading=settings.reading?'on':'off';
-    mirror.setEnabled(settings.mirror);
+    syncAppearance(current);
     patchCopy(doc, copyChanges, placeholderChanges, sloganChanges);
   }
 
@@ -470,19 +508,36 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
     try { storage.setItem(KEY, JSON.stringify(settings)); } catch {}
     sync();
   }
-  async function setTheme(mode) {
+  function setTheme(mode) {
     const request = ++themeRequest;
     const dark = mode === 'auto' ? nativeThemeDark : mode === 'dark';
-    const current = settings.scene === 'auto' ? chooseScene(doc) : settings.scene;
-    const file = ART.find(([id]) => id === current + '-' + (dark ? 'dark' : 'light'))?.[1];
-    if (file) { const image = new doc.defaultView.Image(); image.src = base + artworkFile(file, settings.art); try { await image.decode(); } catch {} }
-    if (stopped || request !== themeRequest) return;
-    const update = () => { settings.theme = mode; body.toggleAttribute('data-ds-dark-theme', dark); save(); };
-    themeTransition?.skipTransition();
-    body.dataset.hertaTransition = '';
-    clearTimeout(themeCleanup);
-    themeCleanup = setTimeout(() => delete body.dataset.hertaTransition, 800);
-    update();
+    themeTransition?.skipTransition(); clearTimeout(themeCleanup);
+    const update = () => {
+      settings.theme = mode;
+      body.toggleAttribute('data-ds-dark-theme', dark);
+      try { storage.setItem(KEY, JSON.stringify(settings)); } catch {}
+      syncAppearance();
+    };
+    const finish = () => {
+      if (stopped || request !== themeRequest) return;
+      clearTimeout(themeCleanup); themeTransition = null;
+      delete body.dataset.hertaTransition;
+      body.dataset.hertaPalette = 'settled';
+      themeButton.removeAttribute('aria-busy');
+      syncAppearance();
+    };
+    const reduced = doc.defaultView.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!doc.startViewTransition || reduced || doc.hidden) { update(); finish(); return; }
+    body.dataset.hertaTransition = ''; body.dataset.hertaPalette = 'changing';
+    themeButton.setAttribute('aria-busy', 'true');
+    // Pause authored motion while the compositor blends appearance snapshots.
+    syncAppearance();
+    try {
+      themeTransition = doc.startViewTransition(update);
+      themeTransition.finished.then(finish, finish);
+      // An obscured renderer may not dispatch animation completion promptly.
+      themeCleanup = setTimeout(finish, THEME_TRANSITION_MS + 500);
+    } catch { update(); finish(); }
   }
   function schedule() {
     if (queued || stopped) return;
@@ -491,6 +546,7 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
   }
 
   const observer = new doc.defaultView.MutationObserver((records) => {
+    if (records.length && records.every(r => r.target === body && r.attributeName === 'data-ds-dark-theme')) { syncAppearance(); return; }
     if (records.some((r) => !stage.contains(r.target) && !controls.contains(r.target) && !mirror.root.contains(r.target)
       && !(r.target instanceof doc.defaultView.Element && r.target.closest('.xterm')))) schedule();
   });
@@ -519,11 +575,13 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
   doc.addEventListener('keydown', onKeyDown);
   themeButton.onclick = () => setTheme(body.hasAttribute('data-ds-dark-theme') ? 'light' : 'dark');
   theme.onchange = () => setTheme(theme.value);
+  viewButton.onclick = () => { settings.displayMode = settings.displayMode === 'focus' ? 'admire' : 'focus'; save(); };
+  displayMode.onchange = () => { settings.displayMode = displayMode.value; save(); };
+  motionMode.onchange=()=>{settings.motion=motionMode.value;save();};
   opacity.oninput = () => { settings.opacity = Number(opacity.value); save(); };
   scene.onchange = () => { settings.scene = scene.value; save(); };
   artDetail.onchange = () => { settings.art = artDetail.value; save(); };
   mirrorToggle.onchange = () => { settings.mirror = mirrorToggle.checked; save(); };
-  readingToggle.onchange = () => { settings.reading = readingToggle.checked; save(); };
 
   doc.addEventListener('visibilitychange', sync);
   doc.defaultView.addEventListener('resize', schedule);
@@ -533,8 +591,8 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
 
   return () => {
     stopped = true;
-    clearTimeout(paletteEnd);delete body.dataset.hertaPalette;
-    doc.defaultView.cancelAnimationFrame(shellFrame);
+    delete body.dataset.hertaPalette;
+    decodedArtwork.clear();
     for (const [name,old] of shellBefore) if (body.style.getPropertyValue(name) === shellAfter.get(name)) { if (old.value) body.style.setProperty(name,old.value,old.priority); else body.style.removeProperty(name); }
     ++themeRequest; themeTransition?.skipTransition(); clearTimeout(themeCleanup); clearTimeout(artCleanup); delete body.dataset.hertaTransition;
     observer.disconnect();
@@ -544,6 +602,8 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
     doc.removeEventListener('keydown', onKeyDown);
     doc.removeEventListener('pointerdown', onPointerDown, true);
     doc.defaultView.removeEventListener('resize', schedule);
+    idleMotion.dispose();
+    toolDock.destroy();
     stage.remove();
     controls.remove();
     ornamentalFrame.remove();
@@ -583,6 +643,7 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
     delete body.dataset.hertaShell;
     delete body.dataset.hertaScene;
     delete body.dataset.hertaTone;
+    delete body.dataset.hertaView;
     delete body.dataset.hertaReading;
   };
 }
@@ -592,6 +653,7 @@ export function apply(ctx) {
 }
 
 const CSS = `
+#herta-motion-actions{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 12px}#herta-motion-actions[hidden]{display:none}#herta-motion-actions button{padding:7px 12px;border:1px solid var(--herta-gold);border-radius:12px;background:var(--herta-surface);color:var(--herta-ink)}#herta-motion-actions button:disabled{opacity:.5;cursor:wait}@media(max-width:850px){#herta-atelier-stage .herta-motion-video{object-position:90% 50%!important}}
 @font-face{font-family:'Herta Serif';src:url("__HERTA_ASSETS__herta-serif-title.ttf") format('truetype');font-weight:800;font-style:normal;font-display:swap}
 body[data-herta-atelier]{--herta-paper:#171021;--herta-ink:#f3ecf9;--herta-muted:#b9a6d2;--herta-surface:rgba(30,21,44,.82);--herta-line:rgba(217,185,110,.22);--herta-accent:#d9b96e;--herta-violet:#b58ce8;--herta-code:#120d1b;--herta-read:rgba(20,14,30,.86);
 --herta-gold:#d9b96e;--herta-corner:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80' fill='none' stroke='%23bca16b' stroke-width='.8'%3E%3Cpath d='M7 70V7h63M13 51V13h38M7 43C43 43 43 7 43 7M13 32C28 32 32 28 32 13M7 60c17-7 29-20 39-36M60 7c-7 17-20 29-36 39'/%3E%3Cpath d='m49 27 3 9 9 3-9 3-3 9-3-9-9-3 9-3Z'/%3E%3Ccircle cx='13' cy='13' r='2'/%3E%3C/svg%3E");
@@ -605,6 +667,12 @@ isolation:isolate;background:var(--herta-paper);color:var(--herta-ink);
 
 body[data-herta-atelier][data-herta-tone=light]{--herta-paper:#f6f1f7;--herta-ink:#2e2140;--herta-muted:#6f5e82;--herta-surface:rgba(255,252,255,.86);--herta-line:rgba(107,63,160,.18);--herta-accent:#6b3fa0;--herta-violet:#8a6a2f;--herta-code:#ece2f2;--herta-read:rgba(250,246,252,.9);}
 body[data-herta-atelier][data-herta-tone=light]{--herta-gold:#957643}
+/* 0.4.x compat: the host composer seat now paints its scrim with
+   --dsw-alias-bg-base, which this skin forces to transparent. Restore the
+   docked-composer scrim locally and hook the current composer DOM. */
+body[data-herta-atelier] [data-composer-seat]{--dsw-alias-bg-base:var(--herta-paper)!important;z-index:7}
+body[data-herta-atelier] [data-conversation-region=composer]{--dsw-alias-bg-base:var(--herta-paper)!important}
+body[data-herta-atelier] [data-composer-card]{border-color:var(--herta-gold)!important;box-shadow:inset 0 0 0 4px rgba(217,185,110,.03),0 12px 40px rgba(10,5,20,.14)!important}
 body[data-herta-atelier][data-herta-tone=light]{--dsw-alias-button-primary-fill:#6b3fa0!important;--dsw-alias-button-primary-invert:#fff!important;--dsw-alias-button-primary-hover:#7d4dbb!important;--dsw-alias-button-elevated-fill:#6b3fa0!important;--dsw-alias-label-tertiary:#705f86!important;--dsw-alias-label-caption:#705f86!important;--dsw-alias-markdown-code-block:rgba(255,253,255,.92)!important;--dsw-alias-markdown-code-block-banner:#ece2f2!important;--dsw-alias-interactive-bg-hover:rgba(107,63,160,.10)!important;}
 
 #herta-atelier-stage{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;background:var(--herta-paper)}
@@ -627,8 +695,6 @@ body[data-herta-atelier] [data-slot=sidebar]:after{right:8px;bottom:8px;transfor
 body[data-herta-atelier] [data-slot=sidebar] :where(button,a)[aria-current=page]{border-inline-start:2px solid var(--herta-gold);background:rgba(185,150,215,.1)}
 body[data-herta-atelier] [data-slot=sidebar] :where(h2,h3){color:var(--herta-muted);letter-spacing:.08em}
 body[data-herta-atelier] [data-herta-frame]{background:transparent!important;}
-body[data-herta-atelier] [data-conversation-scroll]{background:linear-gradient(90deg,var(--herta-read) 0%,var(--herta-read) 36%,transparent 84%)!important;}
-body[data-herta-atelier][data-herta-scene=settings] [data-conversation-scroll]{background:transparent!important;}
 body[data-herta-atelier] :where(textarea,[contenteditable=true]){color:var(--herta-ink)!important;caret-color:var(--herta-accent)}
 body[data-herta-atelier] :where([role=dialog],[role=menu],[role=listbox]){background:var(--herta-paper)!important;color:var(--herta-ink)!important;border-color:var(--herta-line)!important;}
 body[data-herta-atelier] :where([class*="_header"],[class*="_Header"]){background-color:var(--herta-surface)!important;color:var(--herta-ink)!important;}
@@ -802,28 +868,28 @@ body[data-herta-preview] #herta-atelier-frame:before{display:block!important}
 #herta-atelier-controls section>button{display:block;margin:20px auto 0;min-width:115px;background:linear-gradient(120deg,#644280,#382046);color:#f5e7ce;border-color:#c5a66c;border-radius:3px 12px 3px 12px;box-shadow:inset 0 0 0 3px #c5a66c19}
 #herta-atelier-controls section{max-height:calc(100dvh - 110px);overflow-y:auto;box-sizing:border-box}
 .herta-build{display:block;text-align:center;font-size:9px;letter-spacing:.12em;color:var(--herta-muted);margin-top:10px;opacity:.7}
-#herta-atelier-mirror{position:fixed;right:29px;bottom:100px;z-index:95;color:var(--herta-ink);font:13px 'Microsoft YaHei UI',sans-serif}
-#herta-atelier-mirror button{cursor:pointer;color:var(--herta-ink);font:inherit}
+/* The gallery lives in the shared toolbar; its portrait is shown on demand. */
+#herta-atelier-mirror{position:relative;z-index:95;color:var(--herta-ink);font:13px 'Microsoft YaHei UI',sans-serif}
 #herta-atelier-mirror [hidden]{display:none!important}
-.herta-mirror-trigger{width:68px;height:102px;padding:0;border:0;background:none;filter:drop-shadow(0 5px 10px #160c2477);transition:filter .2s,transform .2s}
-.herta-mirror-trigger:hover{filter:drop-shadow(0 0 14px #c49feb88);transform:translateY(-3px)}
-.herta-mirror-trigger img{display:block;width:100%;height:100%;object-fit:contain}
-body[data-herta-atelier] .herta-mirror-panel[role=dialog]{position:fixed;right:25px;top:50%;transform:translateY(-50%);width:min(480px,calc(100vw - 48px));max-height:calc(100dvh - 28px);box-sizing:border-box;padding:16px;background-color:var(--herta-paper)!important;background-image:var(--herta-damask)!important;background-size:92px 128px;border:1px solid var(--herta-gold);border-radius:44px 44px 14px 14px;box-shadow:inset 0 0 0 5px #d9bc820b,inset 0 0 0 6px #d9bc8238,0 18px 70px #0e071b88;overflow:hidden;opacity:0}
-.herta-mirror-panel[data-open]{animation:herta-mirror-show .95s cubic-bezier(.2,.8,.25,1) both}
-@keyframes herta-mirror-show{from{opacity:0;transform:translateY(-50%) scale(.92)}to{opacity:1;transform:translateY(-50%) scale(1)}}
-.herta-mirror-panel:before{content:'';position:absolute;inset:6px;border:1px solid var(--herta-line);border-radius:38px 38px 9px 9px;pointer-events:none;background:var(--herta-scroll) left top/70px 70px no-repeat;z-index:1}
-.herta-mirror-close{position:absolute;top:10px;right:12px;z-index:6;width:30px;height:30px;padding:0;border:1px solid var(--herta-gold);border-radius:50%;background:var(--herta-surface);color:var(--herta-ink);font:18px/1 Georgia,serif;cursor:pointer;opacity:.78;transition:opacity .2s}
-.herta-mirror-close:hover{opacity:1}
-.herta-mirror-glass{width:100%;aspect-ratio:3/4;max-height:calc(100dvh - 100px);border-radius:47% 47% 43% 43%;overflow:hidden;border:3px double var(--herta-gold);outline:1px solid var(--herta-silver);outline-offset:4px;background:radial-gradient(ellipse at 35% 15%,#655078,#1e122d 72%);box-shadow:0 0 0 9px #a988bf13,inset 0 0 30px #07040e77;position:relative;display:grid;place-items:center;margin:0;cursor:pointer}
-.herta-mirror-glass img{display:block;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .9s ease;position:relative;z-index:2}
-.herta-mirror-glass:before{content:'';position:absolute;left:0;right:0;top:-12px;height:65px;background:var(--herta-crest) center/170px auto no-repeat;z-index:3;pointer-events:none}
-.herta-mirror-glass:after{content:'';position:absolute;left:0;right:0;bottom:-5px;height:48px;background:var(--herta-divider) center/200px auto no-repeat;z-index:3;pointer-events:none}
-.herta-mirror-glass span{text-align:center;line-height:1.8;color:#d8c9e8;padding:30px;font-size:34px;z-index:2}
-@media(prefers-reduced-motion:reduce){.herta-mirror-panel[data-open]{animation:none;opacity:1;transform:translateY(-50%)}.herta-mirror-glass img{transition:none;opacity:1}}
+#herta-atelier-mirror button{cursor:pointer;color:var(--herta-ink);font:inherit}
+body[data-herta-atelier] .herta-mirror-panel[role=dialog]{position:fixed;right:22px;top:50%;transform:translateY(-50%);width:min(420px,calc(100vw - 32px));max-height:calc(100dvh - 32px);box-sizing:border-box;padding:16px;background:var(--herta-glass)!important;border:1px solid var(--herta-material-line);border-radius:22px;box-shadow:var(--herta-material-shadow);backdrop-filter:blur(14px) saturate(1.06);-webkit-backdrop-filter:blur(14px) saturate(1.06);overflow:auto;opacity:1}
+.herta-mirror-panel[data-open]{animation:herta-mirror-show .2s ease-out both}
+@keyframes herta-mirror-show{from{opacity:0;transform:translateY(calc(-50% + 8px))}to{opacity:1;transform:translateY(-50%)}}
+.herta-mirror-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;padding:0 2px;color:var(--herta-ink)}
+.herta-mirror-heading strong{font:600 14px 'Microsoft YaHei UI',sans-serif;letter-spacing:.12em}
+.herta-mirror-close{position:static;display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;padding:0;border:1px solid var(--herta-material-line);border-radius:10px;background:var(--herta-glass-soft);font-size:20px!important}
+.herta-mirror-glass{width:100%;aspect-ratio:3/4;max-height:calc(100dvh - 168px);border-radius:47% 47% 43% 43%;overflow:hidden;border:3px double var(--herta-gold);outline:1px solid var(--herta-material-line);outline-offset:4px;background:var(--herta-glass-solid);box-shadow:inset 0 0 26px #10081f22;position:relative;display:grid;place-items:center;margin:0;cursor:pointer}
+.herta-mirror-glass img{display:block;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .2s ease;position:relative;z-index:2}
+.herta-mirror-glass:before{content:'';position:absolute;left:0;right:0;top:-14px;height:54px;background:var(--herta-crest) center/145px auto no-repeat;z-index:3;pointer-events:none;opacity:.72}
+.herta-mirror-glass:after{content:'';position:absolute;left:0;right:0;bottom:-8px;height:38px;background:var(--herta-divider) center/160px auto no-repeat;z-index:3;pointer-events:none;opacity:.72}
+.herta-mirror-glass span{text-align:center;line-height:1.8;color:var(--herta-muted);padding:24px;font-size:13px;z-index:2}
+.herta-mirror-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;color:var(--herta-muted);font-size:12px}
+.herta-mirror-footer button{width:32px;height:30px;display:grid;place-items:center;padding:0;border:1px solid var(--herta-material-line);border-radius:10px;background:var(--herta-glass-soft)}
+.herta-mirror-footer button:disabled{opacity:.38;cursor:default!important}
+@media(prefers-reduced-motion:reduce){.herta-mirror-panel[data-open]{animation:none}.herta-mirror-glass img{transition:none;opacity:1}}
 body[data-herta-atelier][data-herta-tone=light] #herta-atelier-controls>button{background:radial-gradient(ellipse at 35% 20%,#fff9ff,#e5d4f0 75%);color:#69438b}
 @media(max-width:850px){
  body[data-herta-shell=real] #herta-atelier-frame{background-size:48px 48px!important}
- #herta-atelier-mirror{right:18px;bottom:185px}
  body[data-herta-atelier] .herta-mirror-panel[role=dialog]{right:16px;width:min(440px,calc(100vw - 32px))}
  .herta-art{background-position:90% center}
  body[data-herta-atelier] button[data-herta-brand-button]{min-height:98px;padding:0}
@@ -850,16 +916,15 @@ body[data-herta-shell=real][data-herta-scene=settings] .herta-art{background-pos
 body[data-herta-tone=light] .herta-art-chat-light{filter:brightness(1.15) saturate(.85)}
 @media(max-height:650px){body[data-herta-shell=real] [data-herta-brand-row]{zoom:.8}}
 
-/* Slow, full-frame theme dissolve; CSS colors also ease on older renderers. */
-html:has(body[data-herta-atelier])::view-transition-old(root),html:has(body[data-herta-atelier])::view-transition-new(root){animation-duration:1.4s;animation-timing-function:ease-in-out}
-body[data-herta-transition],body[data-herta-transition] *{transition-property:background-color,color,border-color,box-shadow,fill,stroke!important;transition-duration:1.4s!important;transition-timing-function:ease-in-out!important}
-body[data-herta-transition] .herta-art{transition:opacity 1.4s ease-in-out!important}
-#herta-atelier-stage:before{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(246,241,247,.8),rgba(246,241,247,.25) 46%,transparent 74%);opacity:0;transition:opacity 1.4s ease-in-out!important}
-#herta-atelier-stage:after{z-index:1;background:linear-gradient(90deg,rgba(17,11,26,.7),rgba(17,11,26,.2) 46%,transparent 74%),linear-gradient(0deg,rgba(17,11,26,.3),transparent 35%)!important;opacity:1;transition:opacity 1.4s ease-in-out!important}
-body[data-herta-tone=light] #herta-atelier-stage:before{opacity:1}
-body[data-herta-tone=light] #herta-atelier-stage:after{opacity:0}
-@media(prefers-reduced-motion:reduce){body[data-herta-transition],body[data-herta-transition] *{transition:none!important}}
-@media(prefers-reduced-motion:reduce){#herta-atelier-stage:before,#herta-atelier-stage:after{transition:none!important}}
+/* One compositor timeline blends the entire shell, including titlebar controls. */
+html:has(body[data-herta-atelier])::view-transition-group(root){animation-duration:${THEME_TRANSITION_MS}ms;animation-timing-function:ease-in-out}
+html:has(body[data-herta-atelier])::view-transition-old(root){animation:herta-theme-out ${THEME_TRANSITION_MS}ms ease-in-out both;mix-blend-mode:normal}
+html:has(body[data-herta-atelier])::view-transition-new(root){animation:herta-theme-in ${THEME_TRANSITION_MS}ms ease-in-out both;mix-blend-mode:normal}
+@keyframes herta-theme-out{from{opacity:1}to{opacity:0}}
+@keyframes herta-theme-in{from{opacity:0}to{opacity:1}}
+#herta-atelier-stage:before{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(246,241,247,.8),rgba(246,241,247,.25) 46%,transparent 74%);opacity:0}
+#herta-atelier-stage:after{z-index:1;background:linear-gradient(90deg,rgba(17,11,26,.7),rgba(17,11,26,.2) 46%,transparent 74%),linear-gradient(0deg,rgba(17,11,26,.3),transparent 35%)!important;opacity:1}
+@media(prefers-reduced-motion:reduce){html:has(body[data-herta-atelier])::view-transition-group(root),html:has(body[data-herta-atelier])::view-transition-old(root),html:has(body[data-herta-atelier])::view-transition-new(root){animation:none!important}}
 
 /* 0.3.1: a single palette for native caption, sidebar, and titlebar. */
 body[data-herta-atelier]{--dsw-specific-sidebar-fill:var(--herta-shell-color,#21182d)!important;--dsw-desktop-window-tint:var(--herta-shell-color,#21182d)!important}
@@ -897,18 +962,39 @@ body[data-herta-atelier] #herta-atelier-controls section>small{font-size:10px;li
 body[data-herta-atelier] #herta-atelier-controls section:before,body[data-herta-atelier] #herta-atelier-controls section:after{opacity:.55}
 @supports not (backdrop-filter:blur(9px)){body[data-herta-atelier] #herta-atelier-controls section{background-color:color-mix(in srgb,var(--herta-paper) 78%,transparent)!important}}
 
-/* Quiet text surfaces sit inside the ornate shell. Native data attributes
-   avoid coupling reading layout to private hashed component class names. */
-body[data-herta-reading=on] [data-conversation-scroll]{background:transparent!important;box-shadow:none!important;border-radius:0}
-body[data-herta-reading=on] [data-conversation-scroll] [data-chat-flow-key]{box-sizing:border-box;width:100%;max-width:800px;margin:12px 0;padding:18px 22px;background:var(--herta-read)!important;border:1px solid var(--herta-line);border-radius:16px;box-shadow:0 5px 22px #10081f0d;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);line-height:1.85;overflow-wrap:anywhere}
-body[data-herta-reading=on] [data-chat-flow-key] [data-chat-flow-key]{width:auto;max-width:none;margin:0;padding:0;background:transparent!important;border:0;box-shadow:none;backdrop-filter:none}
-body[data-herta-reading=on] [data-chat-flow-key] :where(pre,table){box-sizing:border-box;max-width:100%;overflow:auto}
-body[data-herta-reading=on] [data-chat-flow-key] pre{padding:16px 20px!important;line-height:1.65}
-body[data-herta-reading=on] [data-chat-flow-key] :where(pre,blockquote) .herta-surface-trim{display:none}
-body[data-herta-reading=on] [data-chat-flow-key] :where(p,li,h1,h2,h3,strong){text-shadow:none!important}
-body[data-herta-reading=on] [data-chat-flow-key] img{max-width:100%;height:auto}
+/* Shared plum glass: one palette, edge and elevation family. These rules
+   paint existing boxes; the native host keeps all text/composer geometry. */
+body[data-herta-atelier]{--herta-glass:color-mix(in srgb,var(--herta-paper) 82%,transparent);--herta-glass-soft:color-mix(in srgb,var(--herta-paper) 56%,transparent);--herta-glass-solid:color-mix(in srgb,var(--herta-paper) 94%,transparent);--herta-material-line:color-mix(in srgb,var(--herta-gold) 36%,transparent);--herta-material-shadow:inset 0 1px color-mix(in srgb,var(--herta-ink) 7%,transparent),0 10px 30px #10081f24;--herta-focus-surface:color-mix(in srgb,var(--herta-paper) 88%,transparent)}
+body[data-herta-atelier] [data-conversation-scroll]{background:color-mix(in srgb,var(--herta-paper) 10%,transparent)!important;box-shadow:none!important}
+body[data-herta-atelier] [data-conversation-scroll] [data-chat-flow]:not([data-chat-flow] [data-chat-flow]){border-radius:16px;transition:background-color .24s ease,box-shadow .24s ease}
+body[data-herta-atelier][data-herta-view=focus] [data-conversation-scroll] [data-chat-flow]:not([data-chat-flow] [data-chat-flow]){background:var(--herta-focus-surface);box-shadow:0 0 22px 14px var(--herta-focus-surface)}
+body[data-herta-atelier] [data-chat-flow-key]{color:var(--herta-ink)}
+body[data-herta-atelier][data-herta-view=focus] [data-chat-flow-key] :where(p,li,h1,h2,h3,strong){text-shadow:none!important}
+body[data-herta-atelier] [data-chat-flow-key] :where(pre,blockquote) .herta-surface-trim{visibility:hidden}
+body[data-herta-atelier] #herta-atelier-controls{gap:6px;padding:5px;border:1px solid var(--herta-material-line);border-radius:18px;background:var(--herta-glass-soft);box-shadow:var(--herta-material-shadow);backdrop-filter:none;-webkit-backdrop-filter:none}
+body[data-herta-atelier] #herta-atelier-controls>button{width:36px;height:36px;min-width:36px;min-height:36px;flex:0 0 36px;border:1px solid var(--herta-material-line);border-radius:12px;background:var(--herta-glass)!important;color:var(--herta-gold);box-shadow:inset 0 1px color-mix(in srgb,var(--herta-ink) 6%,transparent);filter:none;transform:none}
+body[data-herta-atelier] #herta-atelier-controls>button:where(:hover,[aria-expanded=true],[aria-pressed=true]){background:var(--herta-glass-solid)!important;border-color:var(--herta-gold)}
+body[data-herta-atelier] #herta-atelier-controls>button img{width:23px;height:23px;object-fit:contain}
+body[data-herta-atelier] #herta-atelier-controls section{background-color:var(--herta-glass)!important;border-color:var(--herta-material-line);border-radius:22px;box-shadow:var(--herta-material-shadow);backdrop-filter:blur(14px) saturate(1.06)}
+body[data-herta-atelier] #herta-atelier-controls section :where(select,input){background-color:var(--herta-glass-soft);border-color:var(--herta-material-line)}
+body[data-herta-atelier] [data-herta-header]:not([data-herta-header] [data-herta-header]){background:var(--herta-glass-soft)!important;backdrop-filter:none!important}
+body[data-herta-atelier] :where([data-composer-card],[data-slot=composer],[data-slot=chat-input],.composer){background-color:var(--herta-glass)!important;background-image:none!important;border-color:var(--herta-material-line)!important;border-radius:20px!important;box-shadow:var(--herta-material-shadow)!important}
+body[data-herta-atelier] [data-conversation-scroll] :where(pre,blockquote){background:var(--herta-glass-solid)!important;background-image:none;border:1px solid var(--herta-material-line);border-radius:14px;box-shadow:inset 0 1px color-mix(in srgb,var(--herta-ink) 5%,transparent)}
+body[data-herta-atelier] [data-conversation-scroll] table{background:var(--herta-glass-solid)}
+@supports not (backdrop-filter:blur(10px)){body[data-herta-atelier] #herta-atelier-controls section,body[data-herta-atelier] .herta-mirror-panel[role=dialog]{background:var(--herta-glass-solid)!important}}
+@media(prefers-reduced-motion:reduce){body[data-herta-atelier] [data-chat-flow]{transition:none!important}}
+#herta-atelier-stage .herta-motion-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:0% 50%;pointer-events:none;filter:saturate(.96)}
+body[data-herta-scene=chat][data-herta-tone=light] .herta-motion-video{filter:saturate(.94)}
+#herta-atelier-stage .herta-motion-video[hidden]{display:none!important}
+body #herta-atelier-stage[data-herta-motion=ready] .herta-art{visibility:hidden}
+
+/* Wide content always scrolls locally. A CSS table does not
+   establish an overflow viewport until it becomes a block box. */
+body[data-herta-atelier] [data-conversation-scroll] :where(pre,table){box-sizing:border-box;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+body[data-herta-atelier] [data-conversation-scroll] .md-table-wide{width:100%;max-width:100%;min-width:0;margin-inline:0;padding-inline:0}
+body[data-herta-atelier] [data-conversation-scroll] table{display:block}
+body[data-herta-atelier] [data-conversation-scroll] pre{padding:16px 20px!important}
+body[data-herta-atelier] [data-chat-flow-key] img{max-width:100%;height:auto}
 body[data-herta-atelier] .herta-art{filter:saturate(.96)}
 body[data-herta-tone=light] .herta-art-chat-light{filter:saturate(.94)}
-@media(max-width:850px){body[data-herta-reading=on] [data-conversation-scroll] [data-chat-flow-key]{padding:14px 16px;max-width:100%}}
-@media(min-width:1200px){body[data-herta-reading=on] [data-conversation-scroll] [data-chat-flow-key]{max-width:min(800px,calc(100% - 300px))}}
 `;
