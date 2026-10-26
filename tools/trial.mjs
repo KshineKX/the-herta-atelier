@@ -1,9 +1,22 @@
 import fs from'node:fs';import path from'node:path';import crypto from'node:crypto';import{fileURLToPath}from'node:url';
-import{makePlan,install,locations}from'./profile.mjs';
+import{makePlan,install,locations,patchMatchesExpected,reconstructBeta10Patch}from'./profile.mjs';
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex'),exists=p=>fs.existsSync(p),read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
 const inside=(p,root)=>path.resolve(p).startsWith(path.resolve(root)+path.sep);
 function tree(folder){if(!exists(folder))return null;const entries={};function walk(dir,rel=''){for(const e of fs.readdirSync(dir,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name))){const r=rel?rel+'/'+e.name:e.name,p=path.join(dir,e.name);if(e.isSymbolicLink())throw Error('Motion symlinks are preserved by refusing trial');if(e.isDirectory()){entries[r+'/']=null;walk(p,r)}else if(e.isFile())entries[r]=sha(fs.readFileSync(p));else throw Error('Unexpected motion entry')}}if(fs.lstatSync(folder).isSymbolicLink())throw Error('Motion directory must be regular');walk(folder);return entries}
 function fileHash(file){return exists(file)?sha(fs.readFileSync(file)):null}
+function expectedAfterPatch(plan,backup,receipt){
+ const snapshot=path.join(backup,'after-profile-patch.yml');
+ if(exists(snapshot)){if(fileHash(snapshot)!==receipt.afterFiles['profile-patch.yml'])throw Error('Installed patch snapshot integrity mismatch');return fs.readFileSync(snapshot,'utf8');}
+ // beta.10 receipts did not save the after text. Rebuild the exact bytes from
+ // the integrity-checked before files and hash-bound installed state. The
+ // original receipt's after hash must match before accepting marker removal.
+ if(receipt.version!=='0.4.0-beta.10')throw Error('Profile changed after trial; no verified installed patch snapshot');
+ const current=read(plan.stateFile),previous=receipt.beforeFiles['install-state.json']===null?null:read(path.join(backup,'install-state.json'));
+ if(current.version!==receipt.version||typeof current.managedBlock!=='string')throw Error('Installed state does not match the trial');
+ const before=fs.readFileSync(path.join(backup,'profile-patch.yml'),'utf8'),expected=reconstructBeta10Patch(before,previous,current.managedBlock);
+ if(sha(Buffer.from(expected))!==receipt.afterFiles['profile-patch.yml'])throw Error('Cannot reconstruct the exact beta.10 installed patch');
+ return expected;
+}
 function files(plan){return{'profile-package.json':plan.manifestFile,'profile-patch.yml':plan.patchFile,'install-state.json':plan.stateFile}}
 function links(plan){return Object.fromEntries(plan.names.map(n=>{const p=path.join(plan.profileDir,'node_modules',n);if(!['dsh-herta-atelier','dsh-boot-animation'].includes(n))throw Error('Unexpected owned package');try{if(!fs.lstatSync(p).isSymbolicLink())throw Error('A non-link package must not be replaced');return[n,fs.realpathSync(p)]}catch(e){if(e.code==='ENOENT')return[n,null];throw e}}))}
 export function makeTrialPlan(options={}){
@@ -23,17 +36,20 @@ export function applyTrial(plan,{onPhase=()=>{}}={}){
  if(exists(motion))fs.cpSync(motion,staged,{recursive:true});else fs.mkdirSync(staged);
  for(const[id,e]of Object.entries(plan.catalog.clips)){const target=path.join(staged,e.file);fs.mkdirSync(path.dirname(target),{recursive:true});fs.copyFileSync(path.join(plan.pack,e.file),target);if(fileHash(target)!==e.sha256)throw Error('Motion changed during copy: '+id)}
  fs.writeFileSync(path.join(staged,'motion-manifest.json'),JSON.stringify(plan.catalog,null,2)+'\n');const receiptFile=path.join(backup,'receipt.json');fs.writeFileSync(receiptFile,JSON.stringify(receipt,null,2)+'\n');let oldMoved=false,newMoved=false;
- try{install(p,{onPhase});if(exists(motion)){fs.renameSync(motion,path.join(backup,'motion-before'));oldMoved=true}fs.renameSync(staged,motion);newMoved=true;onPhase('motion-activated');receipt.afterFiles=Object.fromEntries(Object.entries(files(p)).map(([k,v])=>[k,fileHash(v)]));receipt.afterLinks=links(p);receipt.afterMotion=tree(motion);receipt.phase='installed';fs.writeFileSync(receiptFile,JSON.stringify(receipt,null,2)+'\n');return{status:'trial-installed',version:p.release.version,backup,nativeAcceptance:'pending restart'};
+ try{install(p,{onPhase});if(exists(motion)){fs.renameSync(motion,path.join(backup,'motion-before'));oldMoved=true}fs.renameSync(staged,motion);newMoved=true;onPhase('motion-activated');receipt.afterFiles=Object.fromEntries(Object.entries(files(p)).map(([k,v])=>[k,fileHash(v)]));fs.copyFileSync(p.patchFile,path.join(backup,'after-profile-patch.yml'));receipt.afterLinks=links(p);receipt.afterMotion=tree(motion);receipt.phase='installed';fs.writeFileSync(receiptFile,JSON.stringify(receipt,null,2)+'\n');return{status:'trial-installed',version:p.release.version,backup,nativeAcceptance:'pending restart'};
  }catch(error){if(newMoved)fs.renameSync(motion,path.join(backup,'motion-failed'));if(oldMoved)fs.renameSync(path.join(backup,'motion-before'),motion);restoreProfile(p,backup,receipt);receipt.phase='failed-restored';receipt.error=error.message;fs.writeFileSync(receiptFile,JSON.stringify(receipt,null,2)+'\n');throw error}
 }
 export function rollbackTrial(options={}){
  const loc=locations(options),backup=path.resolve(options.backup||'');if(!inside(backup,path.join(loc.dataDir,'trial-backups'))||!path.basename(backup).startsWith('trial-'))throw Error('Expected a managed trial backup');const receipt=read(path.join(backup,'receipt.json'));
  if(receipt.schemaVersion!==1||receipt.profileDir!==loc.profileDir||receipt.dataDir!==loc.dataDir||receipt.profile!==loc.profile)throw Error('Trial receipt does not match this profile');if(receipt.phase==='rolled-back'||receipt.phase==='failed-restored')return{status:'already-restored',readOnly:true};if(receipt.phase!=='installed')throw Error('Trial has not finished installing');
  const p={...loc,manifestFile:path.join(loc.profileDir,'package.json'),patchFile:path.join(loc.profileDir,'cordis.patch.yml'),names:Object.keys(receipt.beforeLinks)};
- for(const[k,f]of Object.entries(files(p)))if(fileHash(f)!==receipt.afterFiles[k])throw Error('Profile changed after trial; preserved: '+k);
+ for(const[k,h]of Object.entries(receipt.beforeFiles))if(h!==null&&fileHash(path.join(backup,k))!==h)throw Error('Backup integrity mismatch');
+ for(const[k,f]of Object.entries(files(p)))if(k!=='profile-patch.yml'&&fileHash(f)!==receipt.afterFiles[k])throw Error('Profile changed after trial; preserved: '+k);
+ if(fileHash(p.patchFile)!==receipt.afterFiles['profile-patch.yml']&&(!exists(p.patchFile)||!patchMatchesExpected(fs.readFileSync(p.patchFile,'utf8'),expectedAfterPatch(p,backup,receipt))))throw Error('Profile changed after trial; preserved: profile-patch.yml');
  if(JSON.stringify(links(p))!==JSON.stringify(receipt.afterLinks))throw Error('Package links changed after trial; preserved');const motion=path.join(loc.dataDir,'motion');if(JSON.stringify(tree(motion))!==JSON.stringify(receipt.afterMotion))throw Error('Motion changed after trial; preserved');
- for(const[k,h]of Object.entries(receipt.beforeFiles))if(h!==null&&fileHash(path.join(backup,k))!==h)throw Error('Backup integrity mismatch');if(receipt.beforeMotion!==null&&JSON.stringify(tree(path.join(backup,'motion-before')))!==JSON.stringify(receipt.beforeMotion))throw Error('Previous motion backup changed');
+ if(receipt.beforeMotion!==null&&JSON.stringify(tree(path.join(backup,'motion-before')))!==JSON.stringify(receipt.beforeMotion))throw Error('Previous motion backup changed');
  if(!options.apply)return{status:'rollback-plan',readOnly:true,version:receipt.version};
+ if(receipt.version==='0.4.0-beta.10'&&!exists(path.join(backup,'after-profile-patch.yml'))){const original=path.join(backup,'receipt-before-recovery.json'),receiptFile=path.join(backup,'receipt.json');if(exists(original)){if(fileHash(original)!==fileHash(receiptFile))throw Error('Original recovery receipt differs; preserved');}else fs.copyFileSync(receiptFile,original,fs.constants.COPYFILE_EXCL);}
  fs.renameSync(motion,path.join(backup,'motion-after'));if(receipt.beforeMotion!==null)fs.renameSync(path.join(backup,'motion-before'),motion);restoreProfile(p,backup,receipt);receipt.phase='rolled-back';fs.writeFileSync(path.join(backup,'receipt.json'),JSON.stringify(receipt,null,2)+'\n');return{status:'trial-rolled-back',preservedTrialMotion:path.join(backup,'motion-after')};
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){

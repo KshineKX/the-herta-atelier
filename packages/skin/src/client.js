@@ -206,7 +206,8 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
   panel.setAttribute('aria-label', '大黑塔 · 天才书房 皮肤设置面板');
 
   const heading = doc.createElement('strong');
-  heading.append(image('herta-wordmark-plaque.svg', 'HERTA'));
+  const panelDark=image('herta-wordmark-plaque.svg','HERTA'),panelLight=image('herta-wordmark-on-light.svg','HERTA');
+  panelDark.className='herta-panel-dark';panelLight.className='herta-panel-light';heading.append(panelDark,panelLight);
   panel.append(heading);
 
   const row = (text, control) => {
@@ -231,7 +232,6 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
   const motionMode=doc.createElement('select');motionMode.id='herta-motion-mode';
   for(const [value,text]of [['static','静态'],['dynamic','动态']]){const option=doc.createElement('option');option.value=value;option.textContent=text;motionMode.append(option);}
   row('立绘模式',motionMode);
-  const motionStatus=doc.createElement('small');motionStatus.id='herta-motion-status';motionStatus.setAttribute('role','status');motionStatus.setAttribute('aria-live','polite');motionStatus.style.margin='-4px 0 12px';motionStatus.textContent='静态画像';panel.append(motionStatus);
 
   const artDetail = doc.createElement('select');
   for (const [value, text] of [['ultra', '极清 · AI 4×超分'], ['crisp', '清晰 · 细节修复'], ['soft', '柔和 · 原画氛围']]) {
@@ -247,8 +247,6 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
   opacity.value = settings.opacity;
   row('背景强度', opacity);
 
-  const mirrorToggle = doc.createElement('input'); mirrorToggle.type = 'checkbox';
-  row('藏镜入口', mirrorToggle);
 
   const scene = doc.createElement('select');
   for (const [value, text] of [['auto', '随页面切换'], ['home', '星穹 · 天才书房'], ['chat', '课间 · 星间漫游'], ['settings', '私室 · 天才的房间']]) {
@@ -282,7 +280,7 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
   brand.append(brandCaption);
   const version = doc.createElement('small');
   version.className = 'herta-build';
-  version.textContent = 'v0.4.0-beta.10 · Kshine';
+  version.textContent = 'v0.4.0-beta.11 · Kshine';
   panel.append(version);
   const nativeLayoutChanges = new Map();
 
@@ -309,25 +307,27 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
       set(mark, 'margin', real ? '0 auto' : null);
       mark.removeAttribute('width'); mark.removeAttribute('height');
     }
-    set(brand, 'padding', real ? '88px 12px 25px' : null);
-    set(brand, 'background', real ? 'var(--herta-scroll) left top/112px auto no-repeat,var(--herta-crest) center 0/228px auto no-repeat' : null);
+    set(brand, 'padding', real ? '54px 12px 18px' : null);
+    set(brand, 'box-sizing', real ? 'border-box' : null);
+    set(brand, 'margin', real ? '0 auto' : null);
+    set(brand, 'background', real ? 'var(--herta-scroll) left top/92px auto no-repeat,var(--herta-crest) center 0/176px auto no-repeat' : null);
     set(brand, 'max-width', real ? '240px' : null);
     set(brand, 'width', real ? '100%' : null);
     set(brand, 'text-align', real ? 'center' : null);
-    set(brand, 'height', real ? '164px' : null);
+    set(brand, 'height', real ? '128px' : null);
     set(brand, 'display', real ? 'block' : null);
     set(brandCaption, 'display', real ? 'block' : null);
     if (nativeButton) {
       const row = nativeButton.parentElement;
       if (real && row && sidebar?.contains(row)) {
         row.dataset.hertaBrandRow = '';
-        set(row, 'height', '172px');
-        set(row, 'min-height', '172px');
+        set(row, 'height', '136px');
+        set(row, 'min-height', '136px');
         set(row, 'flex-shrink', '0');
       }
-      set(nativeButton, 'min-height', real ? '164px' : null);
+      set(nativeButton, 'min-height', real ? '128px' : null);
       set(nativeButton, 'padding', real ? '0' : null);
-      set(nativeButton, 'height', real ? '164px' : null);
+      set(nativeButton, 'height', real ? '128px' : null);
       set(nativeButton, 'justify-content', real ? 'center' : null);
       set(nativeButton, 'width', real ? '100%' : null);
     }
@@ -349,9 +349,7 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
 
   controls.insertBefore(mirror.trigger, open);
   toolDock=createToolDock(doc,controls,panel,{onCollapse(){panel.hidden=true;open.setAttribute('aria-expanded','false');mirror.close()}});
-  const actionGroup=doc.createElement('div');actionGroup.id='herta-motion-actions';actionGroup.setAttribute('role','group');actionGroup.setAttribute('aria-label','场景动作');panel.insertBefore(actionGroup,source);let actionSignature='';
-  function renderActions(){const actions=idleMotion.availableActions();const signature=JSON.stringify([settings.motion,actions]);if(signature===actionSignature)return;actionSignature=signature;actionGroup.hidden=settings.motion!=='dynamic';actionGroup.replaceChildren();for(const action of actions){const button=doc.createElement('button');button.type='button';button.textContent=action.label;button.dataset.hertaAction=action.id;button.disabled=action.disabled;button.onclick=()=>void idleMotion.trigger(action.id);actionGroup.append(button);}}
-  const idleMotion=createIdleMotion(doc,stage,()=>{motionMode.title='动态素材不可用，已保持静态画像';},status=>{const labels={static:'静态画像',loading:'正在准备动态画像…',playing:'自然待机',action:'动作播放中',away:'已离席 · 点击回来','paused-transition':'外观切换中','paused-hidden':'窗口不可见，动态已暂停','paused-reduced':'系统已启用减少动画，动态已暂停','unavailable-scene':'当前场景尚未接入动态，显示静态画像',unavailable:'动态素材未安装或不可用，显示静态画像'};motionStatus.textContent=labels[status]||labels.static;motionMode.title=motionStatus.textContent;renderActions();});
+  const idleMotion=createIdleMotion(doc,stage,()=>{motionMode.title='动态素材暂时不可用，显示静态画像';},status=>{const hints={unavailable:'动态素材暂时不可用，显示静态画像','unavailable-scene':'当前场景的动态素材暂时不可用','paused-reduced':'系统减少动画已暂停动态画像'};motionMode.title=hints[status]||'待机时自然互动，也可连续轻触背景';});
 
   const heroSymbols = new Map();
   const decoratedSurfaces = new Map();
@@ -402,7 +400,7 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
     stage.style.setProperty('--herta-art-opacity', settings.opacity);
     motionMode.value=settings.motion;
     const activeArt=layers.get(current+'-'+tone);
-    idleMotion.update({enabled:settings.motion==='dynamic',suspended:body.hasAttribute('data-herta-transition'),manifestUrl:base+'motion-manifest.json',scene:current,opacity:settings.opacity});renderActions();
+    idleMotion.update({enabled:settings.motion==='dynamic',ambient:true,suspended:body.hasAttribute('data-herta-transition'),manifestUrl:base+'motion-manifest.json',scene:current,opacity:settings.opacity});
     themeButton.textContent = nativeDark ? '☀' : '☾';
     themeButton.title = nativeDark ? '切换到浅色外观' : '切换到深色外观';
     themeButton.setAttribute('aria-label', themeButton.title);
@@ -416,8 +414,7 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
     const iconFile = settings.displayMode === 'focus' ? 'herta-focus.svg' : 'herta-view.svg';
     if (viewIcon.dataset.file !== iconFile) { viewIcon.src = base + iconFile; viewIcon.dataset.file = iconFile; }
     artDetail.value = settings.art;
-    mirrorToggle.checked = settings.mirror;
-    mirror.setEnabled(settings.mirror);
+    mirror.setEnabled(true);
   }
 
   function sync() {
@@ -581,7 +578,6 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
   opacity.oninput = () => { settings.opacity = Number(opacity.value); save(); };
   scene.onchange = () => { settings.scene = scene.value; save(); };
   artDetail.onchange = () => { settings.art = artDetail.value; save(); };
-  mirrorToggle.onchange = () => { settings.mirror = mirrorToggle.checked; save(); };
 
   doc.addEventListener('visibilitychange', sync);
   doc.defaultView.addEventListener('resize', schedule);
@@ -653,7 +649,7 @@ export function apply(ctx) {
 }
 
 const CSS = `
-#herta-motion-actions{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 12px}#herta-motion-actions[hidden]{display:none}#herta-motion-actions button{padding:7px 12px;border:1px solid var(--herta-gold);border-radius:12px;background:var(--herta-surface);color:var(--herta-ink)}#herta-motion-actions button:disabled{opacity:.5;cursor:wait}@media(max-width:850px){#herta-atelier-stage .herta-motion-video{object-position:90% 50%!important}}
+@media(max-width:850px){#herta-atelier-stage .herta-motion-video{object-position:90% 50%!important}}
 @font-face{font-family:'Herta Serif';src:url("__HERTA_ASSETS__herta-serif-title.ttf") format('truetype');font-weight:800;font-style:normal;font-display:swap}
 body[data-herta-atelier]{--herta-paper:#171021;--herta-ink:#f3ecf9;--herta-muted:#b9a6d2;--herta-surface:rgba(30,21,44,.82);--herta-line:rgba(217,185,110,.22);--herta-accent:#d9b96e;--herta-violet:#b58ce8;--herta-code:#120d1b;--herta-read:rgba(20,14,30,.86);
 --herta-gold:#d9b96e;--herta-corner:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80' fill='none' stroke='%23bca16b' stroke-width='.8'%3E%3Cpath d='M7 70V7h63M13 51V13h38M7 43C43 43 43 7 43 7M13 32C28 32 32 28 32 13M7 60c17-7 29-20 39-36M60 7c-7 17-20 29-36 39'/%3E%3Cpath d='m49 27 3 9 9 3-9 3-3 9-3-9-9-3 9-3Z'/%3E%3Ccircle cx='13' cy='13' r='2'/%3E%3C/svg%3E");
@@ -720,6 +716,9 @@ body[data-herta-atelier] :where(a,[role=link]){color:var(--herta-accent)}
 #herta-atelier-theme{font:18px/1 'Segoe UI Symbol',sans-serif}
 #herta-atelier-controls>button img{width:22px;height:22px;display:block;margin:0}
 #herta-atelier-controls strong img{width:140px;height:auto;display:block}
+#herta-atelier-settings .herta-panel-light{display:none}
+body[data-herta-tone=light] #herta-atelier-settings .herta-panel-dark{display:none}
+body[data-herta-tone=light] #herta-atelier-settings .herta-panel-light{display:block;filter:none}
 #herta-atelier-controls section{position:absolute;right:0;top:42px;width:280px;padding:20px;border:1px solid var(--herta-line);border-radius:16px;background:var(--herta-paper);box-shadow:0 12px 40px #0007;}
 #herta-atelier-controls section{max-width:calc(100vw - 28px);box-shadow:inset 0 0 0 5px rgba(217,185,110,.035),0 18px 60px #0006;padding:26px 22px}
 #herta-atelier-controls section:before,#herta-atelier-controls section:after{content:'';position:absolute;pointer-events:none;width:50px;height:50px;background:var(--herta-corner) center/contain no-repeat;opacity:.65}

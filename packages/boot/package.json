@@ -1,6 +1,6 @@
 {
   "name": "dsh-boot-animation",
-  "version": "0.4.0-beta.10",
+  "version": "0.4.0-beta.11",
   "description": "大黑塔开屏：个人影片、任意键进入、进度与失败兜底；基于 dsh-boot-animation。",
   "license": "MIT",
   "author": "Kshine (Herta customization); upstream lxj5820",

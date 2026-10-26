@@ -1,17 +1,17 @@
 export function createToolDock(doc,host,panel,{onCollapse=()=>{}}={}) {
   const win=doc.defaultView,cleanups=[],timers=new Set();let idle,hover,finish,disposed=false,over=false,suppressHover=false,hoverOpenedAt=0,observed;
   const style=doc.createElement('style');style.textContent=`
-body[data-herta-atelier] #herta-atelier-controls[data-herta-dock]{width:36px;height:40px;display:block;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;pointer-events:none}
-#herta-atelier-controls .herta-dock-slot{position:absolute;right:36px;top:-2px;width:var(--herta-tools-width);height:44px;overflow:hidden;visibility:hidden;pointer-events:none}
+body[data-herta-atelier] #herta-atelier-controls[data-herta-dock]{width:36px;height:44px;display:block;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;pointer-events:none}
+#herta-atelier-controls .herta-dock-slot{position:absolute;right:36px;top:0;width:var(--herta-tools-width);height:44px;overflow:hidden;visibility:hidden;pointer-events:none}
 #herta-atelier-controls .herta-dock-tray{box-sizing:border-box;display:flex;align-items:center;gap:6px;width:var(--herta-tools-width);height:44px;padding:4px 6px;background:var(--herta-glass);border:1px solid var(--herta-material-line);border-radius:14px 0 0 14px;transform:translateX(100%);opacity:0;transition:transform 180ms cubic-bezier(.2,.8,.2,1),opacity 180ms linear;pointer-events:none}
 #herta-atelier-controls[data-herta-dock=open] .herta-dock-slot,#herta-atelier-controls[data-herta-dock=closing] .herta-dock-slot{visibility:visible}
 #herta-atelier-controls[data-herta-dock=open] .herta-dock-tray{transform:translateX(0);opacity:1;pointer-events:auto}
 #herta-atelier-controls[data-herta-dock-instant] .herta-dock-tray{transition:none}
 #herta-atelier-controls .herta-dock-tray>button{box-sizing:border-box;display:grid;place-items:center;width:36px;height:36px;min-width:36px;min-height:36px;flex:0 0 36px;padding:0;margin:0;appearance:none;border:1px solid var(--herta-material-line);border-radius:11px;background:var(--herta-glass);color:var(--herta-gold);font-size:21px;line-height:1;cursor:pointer;transform:none}
 #herta-atelier-controls .herta-dock-tray>button img{display:block;width:23px;height:23px;object-fit:contain;margin:0}
-body[data-herta-atelier] #herta-atelier-controls>button.herta-dock-handle{position:absolute;right:0;top:0;display:grid;place-items:center;width:36px;height:40px;min-height:40px;padding:0;border-radius:0 12px 12px 0;background:var(--herta-glass)!important;pointer-events:auto;touch-action:manipulation;color:var(--herta-gold);font-size:22px}
-#herta-atelier-controls .herta-dock-handle span{display:block;pointer-events:none;transition:transform 180ms ease}
-#herta-atelier-controls[data-herta-dock=open] .herta-dock-handle span{transform:rotate(180deg)}
+body[data-herta-atelier] #herta-atelier-controls>button.herta-dock-handle{position:absolute;right:0;top:0;display:grid;place-items:center;width:36px;height:44px;min-height:44px;padding:0;border-radius:0 12px 12px 0;background:var(--herta-glass)!important;pointer-events:auto;touch-action:manipulation;color:var(--herta-gold);font-size:22px}
+#herta-atelier-controls .herta-dock-handle span{display:block;pointer-events:none;transition:none;transform:none!important}
+
 #herta-atelier-controls[data-herta-dock] section{pointer-events:auto}
 #herta-atelier-controls[data-herta-dock] button:focus-visible{outline:2px solid var(--herta-gold);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){#herta-atelier-controls .herta-dock-tray,#herta-atelier-controls .herta-dock-handle span{transition:none}}
@@ -24,7 +24,7 @@ body[data-herta-atelier] #herta-atelier-controls>button.herta-dock-handle{positi
   function listen(el,event,fn,opts){el.addEventListener(event,fn,opts);cleanups.push(()=>el.removeEventListener(event,fn,opts))}
   const focused=()=>host.contains(doc.activeElement)&&doc.activeElement.matches(':focus-visible');
   const locked=()=>!panel.hidden||focused();
-  function labels(value){handle.setAttribute('aria-expanded',String(value));handle.setAttribute('aria-label',value?'收起皮肤工具':'展开皮肤工具');handle.title=value?'收起皮肤工具':'点击或停留片刻展开皮肤工具'}
+  function labels(value){handle.firstElementChild.textContent=value?'›':'‹';handle.setAttribute('aria-expanded',String(value));handle.setAttribute('aria-label',value?'收起皮肤工具':'展开皮肤工具');handle.title=value?'收起皮肤工具':'点击或停留片刻展开皮肤工具'}
   function schedule(){clear(idle);if(disposed||over||locked()||host.dataset.hertaDock!=='open')return;idle=later(()=>close(false),4000)}
   function open(instant=false){if(disposed)return;clear(idle);clear(hover);clear(finish);host.toggleAttribute('data-herta-dock-instant',instant);tray.inert=false;tray.removeAttribute('aria-hidden');host.dataset.hertaDock='open';labels(true);schedule()}
   function close(manual=false){if(disposed||!manual&&(over||locked()))return;clear(idle);clear(hover);clear(finish);if(manual){suppressHover=true;onCollapse();if(tray.contains(doc.activeElement))handle.focus({preventScroll:true})}host.removeAttribute('data-herta-dock-instant');tray.inert=true;tray.setAttribute('aria-hidden','true');host.dataset.hertaDock='closing';labels(false);finish=later(()=>{host.dataset.hertaDock='closed'},190)}

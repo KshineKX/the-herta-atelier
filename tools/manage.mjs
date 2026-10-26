@@ -17,8 +17,9 @@ try{
   }else console.log(JSON.stringify({motionClips:13,readOnly:true}));
  }else{if(plan.release.edition==='theme')throw Error('Complete theme package is missing motion assets.');if(opts.apply)console.log(JSON.stringify(install(plan),null,2));}
 }
-else if(command==='rollback'){
+else if(command==='rollback'||command==='recover-beta10'){
  const backup=opts.backup||JSON.parse(fs.readFileSync(path.join(loc.dataDir,'latest-trial-'+loc.profile+'.json'),'utf8')).backup;
+ if(command==='recover-beta10'&&JSON.parse(fs.readFileSync(path.join(backup,'receipt.json'),'utf8')).version!=='0.4.0-beta.10')throw Error('Recovery entry requires an existing beta.10 trial receipt; nothing was changed.');
  console.log(JSON.stringify(rollbackTrial({...opts,backup}),null,2));
 }
  else if(command==='uninstall')console.log(JSON.stringify(uninstall(opts),null,2));

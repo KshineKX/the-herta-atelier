@@ -164,6 +164,47 @@ function createIdleMotion(doc,stage,onUnavailable=()=>{},onStatus=()=>{}) {
   const videos=[0,1].map(()=>{const v=doc.createElement('video');v.className='herta-motion-video';v.muted=true;v.defaultMuted=true;v.playsInline=true;v.preload='metadata';v.hidden=true;v.setAttribute('aria-hidden','true');plane.append(v);return v});
   const prepared=[null,null];let blendTimer,blendResolve;
   let options={},catalog=null,catalogPromise=null,disposed=false,failed=false,loading=false,sceneMissing=false,serial=0,actionSerial=0,active=-1,scene='home',state='idle',status='',delayTimer,delayResolve;
+  let ambientTimer,ambientKind='',ambientDue=0,touches=[],press=null,touchAfter=0,lastRoomAction='';
+  const now=()=>win.performance.now();
+  const blockedTouch='a,button,input,select,textarea,label,summary,pre,code,table,blockquote,p,li,h1,h2,h3,h4,h5,h6,img,video,canvas,[contenteditable]:not([contenteditable="false"]),[role="button"],[role="dialog"],[role="menu"],[role="tab"],[role="textbox"],[data-chat-flow-key],#herta-atelier-controls,#herta-atelier-mirror';
+  function backdrop(event){
+    const target=event.composedPath?.().find(node=>node?.nodeType===1)||event.target;
+    return !!target?.closest&&!target.closest(blockedTouch)&&!doc.getSelection()?.toString().trim();
+  }
+  function clearAmbient(){win.clearTimeout(ambientTimer);ambientTimer=null;ambientKind='';ambientDue=0;delete stage.dataset.hertaAmbientDelay;}
+  function ambientReady(){return options.ambient&&allowed()&&!paused()&&!loading&&!sceneMissing&&active>=0&&catalog&&state!=='action';}
+  function ambientAction(){
+    const choices=availableActions().filter(action=>!action.disabled);
+    if(!choices.length)return null;
+    if(scene==='settings'){const varied=choices.filter(action=>action.id!==lastRoomAction),pool=varied.length?varied:choices;const chosen=pool[Math.floor(Math.random()*pool.length)].id;lastRoomAction=chosen;return chosen;}
+    return choices[0].id;
+  }
+  function syncAmbient(){
+    if(!ambientReady()){clearAmbient();return;}
+    const kind=state==='away'?'return':'idle';
+    if(ambientTimer&&ambientKind===kind)return;
+    clearAmbient();ambientKind=kind;
+    // One low-frequency timer. Hidden/reduced/static states discard it rather than catching up.
+    const delay=kind==='return'?20000+Math.random()*10000:150000+Math.random()*90000;
+    ambientDue=now()+delay;stage.dataset.hertaAmbientDelay=String(Math.round(delay));
+    ambientTimer=win.setTimeout(()=>{ambientTimer=null;ambientKind='';ambientDue=0;if(!ambientReady()){syncAmbient();return;}const id=ambientAction();if(id){touchAfter=now()+45000;void trigger(id);}},delay);
+  }
+  function activity(){touches=[];press=null;if(state==='idle'){clearAmbient();syncAmbient();}}
+  function pointerDown(event){
+    if(state==='idle'){clearAmbient();syncAmbient();}
+    if(!ambientReady()||event.button!==0||event.isPrimary===false||!backdrop(event)){touches=[];press=null;return;}
+    press={x:event.clientX,y:event.clientY,at:now()};
+  }
+  function pointerUp(event){
+    const start=press;press=null;
+    if(!start||!ambientReady()||event.button!==0||event.isPrimary===false||!backdrop(event)||now()-start.at>650||Math.hypot(event.clientX-start.x,event.clientY-start.y)>10){touches=[];return;}
+    if(state!=='away'&&now()<touchAfter){touches=[];return;}
+    const t=now();touches=touches.filter(tap=>t-tap.at<1600&&Math.hypot(event.clientX-tap.x,event.clientY-tap.y)<64);
+    touches.push({x:event.clientX,y:event.clientY,at:t});
+    if(touches.length>=3){touches=[];const id=ambientAction();if(id){touchAfter=t+45000;void trigger(id);}}
+  }
+  doc.addEventListener('pointerdown',pointerDown,true);doc.addEventListener('pointerup',pointerUp,true);
+  doc.addEventListener('pointercancel',activity,true);doc.addEventListener('keydown',activity,true);doc.addEventListener('wheel',activity,{passive:true,capture:true});
   videos.forEach((v,i)=>v.addEventListener('error',()=>{if(i===active&&allowed())fail()}));
   const manifestUrl=()=>options.manifestUrl||'/herta-atelier/motion-manifest.json';
   const allowed=()=>options.enabled&&!disposed&&!failed;
@@ -173,7 +214,7 @@ function createIdleMotion(doc,stage,onUnavailable=()=>{},onStatus=()=>{}) {
     stage.dataset.hertaMotion=visible?'ready':allowed()&&!catalog?'loading':'static';
     stage.dataset.hertaActionState=state;
     const next=!options.enabled?'static':failed?'unavailable':sceneMissing?'unavailable-scene':reduced.matches?'paused-reduced':doc.hidden?'paused-hidden':options.suspended?'paused-transition':loading||!visible?'loading':state==='away'?'away':state==='action'?'action':'playing';
-    stage.dataset.hertaPlayback=next;if(next!==status){status=next;onStatus(next);}
+    stage.dataset.hertaPlayback=next;if(next!==status){status=next;onStatus(next);}syncAmbient();
   }
   function cancelBlend(){clearTimeout(blendTimer);blendResolve?.();blendResolve=null;for(const v of videos){v.style.transition='none';v.style.opacity='1'}}
   function stopAll(clear=false){cancelBlend();for(const [i,v]of videos.entries()){v.pause();if(clear){prepared[i]?.cancel();prepared[i]=null;v.hidden=true;v.removeAttribute('src');v.load()}}if(clear){active=-1;delete stage.dataset.hertaClip}}
@@ -235,29 +276,30 @@ function createIdleMotion(doc,stage,onUnavailable=()=>{},onStatus=()=>{}) {
   }
   function update(next){
     const before=options;options=next;const nextScene=MOTION_SCENES[next.scene]?next.scene:'home',changed=nextScene!==scene;scene=nextScene;
+    if(changed||!next.enabled){clearAmbient();touches=[];press=null;touchAfter=0;}
     if(!next.enabled){++serial;++actionSerial;cancelDelay();state='idle';failed=false;sceneMissing=false;loading=false;catalog=null;catalogPromise=null;stopAll(true);notify();return}
     if(failed){notify();return}
     if(changed||!before.enabled||active<0&&!catalogPromise){++actionSerial;cancelDelay();notify();void idle();return}
     if(before.suspended!==next.suspended||before.opacity!==next.opacity)resume();else notify();
   }
   doc.addEventListener('visibilitychange',resume);reduced.addEventListener('change',resume);
-  return {update,trigger,availableActions,getState:()=>({scene,state,status,clip:stage.dataset.hertaClip,loading,sceneMissing}),dispose(){disposed=true;++serial;++actionSerial;cancelDelay();stopAll(true);plane.remove();doc.removeEventListener('visibilitychange',resume);reduced.removeEventListener('change',resume);for(const key of ['hertaMotion','hertaPlayback','hertaActionState','hertaClip'])delete stage.dataset[key]}};
+  return {update,trigger,availableActions,getState:()=>({scene,state,status,clip:stage.dataset.hertaClip,loading,sceneMissing,ambient:{kind:ambientKind,dueIn:Math.max(0,ambientDue-now()),touches:touches.length}}),dispose(){disposed=true;++serial;++actionSerial;clearAmbient();cancelDelay();stopAll(true);plane.remove();doc.removeEventListener('pointerdown',pointerDown,true);doc.removeEventListener('pointerup',pointerUp,true);doc.removeEventListener('pointercancel',activity,true);doc.removeEventListener('keydown',activity,true);doc.removeEventListener('wheel',activity,true);doc.removeEventListener('visibilitychange',resume);reduced.removeEventListener('change',resume);for(const key of ['hertaMotion','hertaPlayback','hertaActionState','hertaClip','hertaAmbientDelay'])delete stage.dataset[key]}};
 }
 
 function createToolDock(doc,host,panel,{onCollapse=()=>{}}={}) {
   const win=doc.defaultView,cleanups=[],timers=new Set();let idle,hover,finish,disposed=false,over=false,suppressHover=false,hoverOpenedAt=0,observed;
   const style=doc.createElement('style');style.textContent=`
-body[data-herta-atelier] #herta-atelier-controls[data-herta-dock]{width:36px;height:40px;display:block;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;pointer-events:none}
-#herta-atelier-controls .herta-dock-slot{position:absolute;right:36px;top:-2px;width:var(--herta-tools-width);height:44px;overflow:hidden;visibility:hidden;pointer-events:none}
+body[data-herta-atelier] #herta-atelier-controls[data-herta-dock]{width:36px;height:44px;display:block;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;pointer-events:none}
+#herta-atelier-controls .herta-dock-slot{position:absolute;right:36px;top:0;width:var(--herta-tools-width);height:44px;overflow:hidden;visibility:hidden;pointer-events:none}
 #herta-atelier-controls .herta-dock-tray{box-sizing:border-box;display:flex;align-items:center;gap:6px;width:var(--herta-tools-width);height:44px;padding:4px 6px;background:var(--herta-glass);border:1px solid var(--herta-material-line);border-radius:14px 0 0 14px;transform:translateX(100%);opacity:0;transition:transform 180ms cubic-bezier(.2,.8,.2,1),opacity 180ms linear;pointer-events:none}
 #herta-atelier-controls[data-herta-dock=open] .herta-dock-slot,#herta-atelier-controls[data-herta-dock=closing] .herta-dock-slot{visibility:visible}
 #herta-atelier-controls[data-herta-dock=open] .herta-dock-tray{transform:translateX(0);opacity:1;pointer-events:auto}
 #herta-atelier-controls[data-herta-dock-instant] .herta-dock-tray{transition:none}
 #herta-atelier-controls .herta-dock-tray>button{box-sizing:border-box;display:grid;place-items:center;width:36px;height:36px;min-width:36px;min-height:36px;flex:0 0 36px;padding:0;margin:0;appearance:none;border:1px solid var(--herta-material-line);border-radius:11px;background:var(--herta-glass);color:var(--herta-gold);font-size:21px;line-height:1;cursor:pointer;transform:none}
 #herta-atelier-controls .herta-dock-tray>button img{display:block;width:23px;height:23px;object-fit:contain;margin:0}
-body[data-herta-atelier] #herta-atelier-controls>button.herta-dock-handle{position:absolute;right:0;top:0;display:grid;place-items:center;width:36px;height:40px;min-height:40px;padding:0;border-radius:0 12px 12px 0;background:var(--herta-glass)!important;pointer-events:auto;touch-action:manipulation;color:var(--herta-gold);font-size:22px}
-#herta-atelier-controls .herta-dock-handle span{display:block;pointer-events:none;transition:transform 180ms ease}
-#herta-atelier-controls[data-herta-dock=open] .herta-dock-handle span{transform:rotate(180deg)}
+body[data-herta-atelier] #herta-atelier-controls>button.herta-dock-handle{position:absolute;right:0;top:0;display:grid;place-items:center;width:36px;height:44px;min-height:44px;padding:0;border-radius:0 12px 12px 0;background:var(--herta-glass)!important;pointer-events:auto;touch-action:manipulation;color:var(--herta-gold);font-size:22px}
+#herta-atelier-controls .herta-dock-handle span{display:block;pointer-events:none;transition:none;transform:none!important}
+
 #herta-atelier-controls[data-herta-dock] section{pointer-events:auto}
 #herta-atelier-controls[data-herta-dock] button:focus-visible{outline:2px solid var(--herta-gold);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){#herta-atelier-controls .herta-dock-tray,#herta-atelier-controls .herta-dock-handle span{transition:none}}
@@ -270,7 +312,7 @@ body[data-herta-atelier] #herta-atelier-controls>button.herta-dock-handle{positi
   function listen(el,event,fn,opts){el.addEventListener(event,fn,opts);cleanups.push(()=>el.removeEventListener(event,fn,opts))}
   const focused=()=>host.contains(doc.activeElement)&&doc.activeElement.matches(':focus-visible');
   const locked=()=>!panel.hidden||focused();
-  function labels(value){handle.setAttribute('aria-expanded',String(value));handle.setAttribute('aria-label',value?'收起皮肤工具':'展开皮肤工具');handle.title=value?'收起皮肤工具':'点击或停留片刻展开皮肤工具'}
+  function labels(value){handle.firstElementChild.textContent=value?'›':'‹';handle.setAttribute('aria-expanded',String(value));handle.setAttribute('aria-label',value?'收起皮肤工具':'展开皮肤工具');handle.title=value?'收起皮肤工具':'点击或停留片刻展开皮肤工具'}
   function schedule(){clear(idle);if(disposed||over||locked()||host.dataset.hertaDock!=='open')return;idle=later(()=>close(false),4000)}
   function open(instant=false){if(disposed)return;clear(idle);clear(hover);clear(finish);host.toggleAttribute('data-herta-dock-instant',instant);tray.inert=false;tray.removeAttribute('aria-hidden');host.dataset.hertaDock='open';labels(true);schedule()}
   function close(manual=false){if(disposed||!manual&&(over||locked()))return;clear(idle);clear(hover);clear(finish);if(manual){suppressHover=true;onCollapse();if(tray.contains(doc.activeElement))handle.focus({preventScroll:true})}host.removeAttribute('data-herta-dock-instant');tray.inert=true;tray.setAttribute('aria-hidden','true');host.dataset.hertaDock='closing';labels(false);finish=later(()=>{host.dataset.hertaDock='closed'},190)}
@@ -503,7 +545,8 @@ function mount(doc = document, { base = '/herta-atelier/', storage = globalThis.
   panel.setAttribute('aria-label', '大黑塔 · 天才书房 皮肤设置面板');
 
   const heading = doc.createElement('strong');
-  heading.append(image('herta-wordmark-plaque.svg', 'HERTA'));
+  const panelDark=image('herta-wordmark-plaque.svg','HERTA'),panelLight=image('herta-wordmark-on-light.svg','HERTA');
+  panelDark.className='herta-panel-dark';panelLight.className='herta-panel-light';heading.append(panelDark,panelLight);
   panel.append(heading);
 
   const row = (text, control) => {
@@ -528,7 +571,6 @@ function mount(doc = document, { base = '/herta-atelier/', storage = globalThis.
   const motionMode=doc.createElement('select');motionMode.id='herta-motion-mode';
   for(const [value,text]of [['static','静态'],['dynamic','动态']]){const option=doc.createElement('option');option.value=value;option.textContent=text;motionMode.append(option);}
   row('立绘模式',motionMode);
-  const motionStatus=doc.createElement('small');motionStatus.id='herta-motion-status';motionStatus.setAttribute('role','status');motionStatus.setAttribute('aria-live','polite');motionStatus.style.margin='-4px 0 12px';motionStatus.textContent='静态画像';panel.append(motionStatus);
 
   const artDetail = doc.createElement('select');
   for (const [value, text] of [['ultra', '极清 · AI 4×超分'], ['crisp', '清晰 · 细节修复'], ['soft', '柔和 · 原画氛围']]) {
@@ -544,8 +586,6 @@ function mount(doc = document, { base = '/herta-atelier/', storage = globalThis.
   opacity.value = settings.opacity;
   row('背景强度', opacity);
 
-  const mirrorToggle = doc.createElement('input'); mirrorToggle.type = 'checkbox';
-  row('藏镜入口', mirrorToggle);
 
   const scene = doc.createElement('select');
   for (const [value, text] of [['auto', '随页面切换'], ['home', '星穹 · 天才书房'], ['chat', '课间 · 星间漫游'], ['settings', '私室 · 天才的房间']]) {
@@ -579,7 +619,7 @@ function mount(doc = document, { base = '/herta-atelier/', storage = globalThis.
   brand.append(brandCaption);
   const version = doc.createElement('small');
   version.className = 'herta-build';
-  version.textContent = 'v0.4.0-beta.10 · Kshine';
+  version.textContent = 'v0.4.0-beta.11 · Kshine';
   panel.append(version);
   const nativeLayoutChanges = new Map();
 
@@ -606,25 +646,27 @@ function mount(doc = document, { base = '/herta-atelier/', storage = globalThis.
       set(mark, 'margin', real ? '0 auto' : null);
       mark.removeAttribute('width'); mark.removeAttribute('height');
     }
-    set(brand, 'padding', real ? '88px 12px 25px' : null);
-    set(brand, 'background', real ? 'var(--herta-scroll) left top/112px auto no-repeat,var(--herta-crest) center 0/228px auto no-repeat' : null);
+    set(brand, 'padding', real ? '54px 12px 18px' : null);
+    set(brand, 'box-sizing', real ? 'border-box' : null);
+    set(brand, 'margin', real ? '0 auto' : null);
+    set(brand, 'background', real ? 'var(--herta-scroll) left top/92px auto no-repeat,var(--herta-crest) center 0/176px auto no-repeat' : null);
     set(brand, 'max-width', real ? '240px' : null);
     set(brand, 'width', real ? '100%' : null);
     set(brand, 'text-align', real ? 'center' : null);
-    set(brand, 'height', real ? '164px' : null);
+    set(brand, 'height', real ? '128px' : null);
     set(brand, 'display', real ? 'block' : null);
     set(brandCaption, 'display', real ? 'block' : null);
     if (nativeButton) {
       const row = nativeButton.parentElement;
       if (real && row && sidebar?.contains(row)) {
         row.dataset.hertaBrandRow = '';
-        set(row, 'height', '172px');
-        set(row, 'min-height', '172px');
+        set(row, 'height', '136px');
+        set(row, 'min-height', '136px');
         set(row, 'flex-shrink', '0');
       }
-      set(nativeButton, 'min-height', real ? '164px' : null);
+      set(nativeButton, 'min-height', real ? '128px' : null);
       set(nativeButton, 'padding', real ? '0' : null);
-      set(nativeButton, 'height', real ? '164px' : null);
+      set(nativeButton, 'height', real ? '128px' : null);
       set(nativeButton, 'justify-content', real ? 'center' : null);
       set(nativeButton, 'width', real ? '100%' : null);
     }
@@ -646,9 +688,7 @@ function mount(doc = document, { base = '/herta-atelier/', storage = globalThis.
 
   controls.insertBefore(mirror.trigger, open);
   toolDock=createToolDock(doc,controls,panel,{onCollapse(){panel.hidden=true;open.setAttribute('aria-expanded','false');mirror.close()}});
-  const actionGroup=doc.createElement('div');actionGroup.id='herta-motion-actions';actionGroup.setAttribute('role','group');actionGroup.setAttribute('aria-label','场景动作');panel.insertBefore(actionGroup,source);let actionSignature='';
-  function renderActions(){const actions=idleMotion.availableActions();const signature=JSON.stringify([settings.motion,actions]);if(signature===actionSignature)return;actionSignature=signature;actionGroup.hidden=settings.motion!=='dynamic';actionGroup.replaceChildren();for(const action of actions){const button=doc.createElement('button');button.type='button';button.textContent=action.label;button.dataset.hertaAction=action.id;button.disabled=action.disabled;button.onclick=()=>void idleMotion.trigger(action.id);actionGroup.append(button);}}
-  const idleMotion=createIdleMotion(doc,stage,()=>{motionMode.title='动态素材不可用，已保持静态画像';},status=>{const labels={static:'静态画像',loading:'正在准备动态画像…',playing:'自然待机',action:'动作播放中',away:'已离席 · 点击回来','paused-transition':'外观切换中','paused-hidden':'窗口不可见，动态已暂停','paused-reduced':'系统已启用减少动画，动态已暂停','unavailable-scene':'当前场景尚未接入动态，显示静态画像',unavailable:'动态素材未安装或不可用，显示静态画像'};motionStatus.textContent=labels[status]||labels.static;motionMode.title=motionStatus.textContent;renderActions();});
+  const idleMotion=createIdleMotion(doc,stage,()=>{motionMode.title='动态素材暂时不可用，显示静态画像';},status=>{const hints={unavailable:'动态素材暂时不可用，显示静态画像','unavailable-scene':'当前场景的动态素材暂时不可用','paused-reduced':'系统减少动画已暂停动态画像'};motionMode.title=hints[status]||'待机时自然互动，也可连续轻触背景';});
 
   const heroSymbols = new Map();
   const decoratedSurfaces = new Map();
@@ -699,7 +739,7 @@ function mount(doc = document, { base = '/herta-atelier/', storage = globalThis.
     stage.style.setProperty('--herta-art-opacity', settings.opacity);
     motionMode.value=settings.motion;
     const activeArt=layers.get(current+'-'+tone);
-    idleMotion.update({enabled:settings.motion==='dynamic',suspended:body.hasAttribute('data-herta-transition'),manifestUrl:base+'motion-manifest.json',scene:current,opacity:settings.opacity});renderActions();
+    idleMotion.update({enabled:settings.motion==='dynamic',ambient:true,suspended:body.hasAttribute('data-herta-transition'),manifestUrl:base+'motion-manifest.json',scene:current,opacity:settings.opacity});
     themeButton.textContent = nativeDark ? '☀' : '☾';
     themeButton.title = nativeDark ? '切换到浅色外观' : '切换到深色外观';
     themeButton.setAttribute('aria-label', themeButton.title);
@@ -713,8 +753,7 @@ function mount(doc = document, { base = '/herta-atelier/', storage = globalThis.
     const iconFile = settings.displayMode === 'focus' ? 'herta-focus.svg' : 'herta-view.svg';
     if (viewIcon.dataset.file !== iconFile) { viewIcon.src = base + iconFile; viewIcon.dataset.file = iconFile; }
     artDetail.value = settings.art;
-    mirrorToggle.checked = settings.mirror;
-    mirror.setEnabled(settings.mirror);
+    mirror.setEnabled(true);
   }
 
   function sync() {
@@ -878,7 +917,6 @@ function mount(doc = document, { base = '/herta-atelier/', storage = globalThis.
   opacity.oninput = () => { settings.opacity = Number(opacity.value); save(); };
   scene.onchange = () => { settings.scene = scene.value; save(); };
   artDetail.onchange = () => { settings.art = artDetail.value; save(); };
-  mirrorToggle.onchange = () => { settings.mirror = mirrorToggle.checked; save(); };
 
   doc.addEventListener('visibilitychange', sync);
   doc.defaultView.addEventListener('resize', schedule);
@@ -950,7 +988,7 @@ function apply(ctx) {
 }
 
 const CSS = `
-#herta-motion-actions{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 12px}#herta-motion-actions[hidden]{display:none}#herta-motion-actions button{padding:7px 12px;border:1px solid var(--herta-gold);border-radius:12px;background:var(--herta-surface);color:var(--herta-ink)}#herta-motion-actions button:disabled{opacity:.5;cursor:wait}@media(max-width:850px){#herta-atelier-stage .herta-motion-video{object-position:90% 50%!important}}
+@media(max-width:850px){#herta-atelier-stage .herta-motion-video{object-position:90% 50%!important}}
 @font-face{font-family:'Herta Serif';src:url("__HERTA_ASSETS__herta-serif-title.ttf") format('truetype');font-weight:800;font-style:normal;font-display:swap}
 body[data-herta-atelier]{--herta-paper:#171021;--herta-ink:#f3ecf9;--herta-muted:#b9a6d2;--herta-surface:rgba(30,21,44,.82);--herta-line:rgba(217,185,110,.22);--herta-accent:#d9b96e;--herta-violet:#b58ce8;--herta-code:#120d1b;--herta-read:rgba(20,14,30,.86);
 --herta-gold:#d9b96e;--herta-corner:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80' fill='none' stroke='%23bca16b' stroke-width='.8'%3E%3Cpath d='M7 70V7h63M13 51V13h38M7 43C43 43 43 7 43 7M13 32C28 32 32 28 32 13M7 60c17-7 29-20 39-36M60 7c-7 17-20 29-36 39'/%3E%3Cpath d='m49 27 3 9 9 3-9 3-3 9-3-9-9-3 9-3Z'/%3E%3Ccircle cx='13' cy='13' r='2'/%3E%3C/svg%3E");
@@ -1017,6 +1055,9 @@ body[data-herta-atelier] :where(a,[role=link]){color:var(--herta-accent)}
 #herta-atelier-theme{font:18px/1 'Segoe UI Symbol',sans-serif}
 #herta-atelier-controls>button img{width:22px;height:22px;display:block;margin:0}
 #herta-atelier-controls strong img{width:140px;height:auto;display:block}
+#herta-atelier-settings .herta-panel-light{display:none}
+body[data-herta-tone=light] #herta-atelier-settings .herta-panel-dark{display:none}
+body[data-herta-tone=light] #herta-atelier-settings .herta-panel-light{display:block;filter:none}
 #herta-atelier-controls section{position:absolute;right:0;top:42px;width:280px;padding:20px;border:1px solid var(--herta-line);border-radius:16px;background:var(--herta-paper);box-shadow:0 12px 40px #0007;}
 #herta-atelier-controls section{max-width:calc(100vw - 28px);box-shadow:inset 0 0 0 5px rgba(217,185,110,.035),0 18px 60px #0006;padding:26px 22px}
 #herta-atelier-controls section:before,#herta-atelier-controls section:after{content:'';position:absolute;pointer-events:none;width:50px;height:50px;background:var(--herta-corner) center/contain no-repeat;opacity:.65}

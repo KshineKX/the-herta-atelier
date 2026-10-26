@@ -1,4 +1,4 @@
-param([ValidateSet('install','uninstall','doctor','gallery','import-video','rollback')][string]$Action='doctor',[switch]$Apply,[switch]$WithBoot,[switch]$Open,[string]$InputFile='',[string]$DshHome='',[string]$Profile='desktop')
+param([ValidateSet('install','uninstall','doctor','gallery','import-video','rollback','recover-beta10')][string]$Action='doctor',[switch]$Apply,[switch]$WithBoot,[switch]$Open,[string]$InputFile='',[string]$DshHome='',[string]$Profile='desktop',[string]$Backup='',[string]$DataDir='')
 $ErrorActionPreference='Stop'
 try {
   $hertaRoot=Split-Path $PSScriptRoot -Parent
@@ -19,6 +19,8 @@ try {
   if($WithBoot){$hertaArgs+='--with-boot'}
   if($Open){$hertaArgs+='--open'}
   if($InputFile){$hertaArgs+=@('--file',$InputFile)}
+  if($Backup){$hertaArgs+=@('--backup',$Backup)}
+  if($DataDir){$hertaArgs+=@('--data-dir',$DataDir)}
   & $hertaNode @hertaArgs
   exit $LASTEXITCODE
 }catch{Write-Host ('Herta Atelier: '+$_.Exception.Message);exit 2}

@@ -11,6 +11,47 @@ export function createIdleMotion(doc,stage,onUnavailable=()=>{},onStatus=()=>{})
   const videos=[0,1].map(()=>{const v=doc.createElement('video');v.className='herta-motion-video';v.muted=true;v.defaultMuted=true;v.playsInline=true;v.preload='metadata';v.hidden=true;v.setAttribute('aria-hidden','true');plane.append(v);return v});
   const prepared=[null,null];let blendTimer,blendResolve;
   let options={},catalog=null,catalogPromise=null,disposed=false,failed=false,loading=false,sceneMissing=false,serial=0,actionSerial=0,active=-1,scene='home',state='idle',status='',delayTimer,delayResolve;
+  let ambientTimer,ambientKind='',ambientDue=0,touches=[],press=null,touchAfter=0,lastRoomAction='';
+  const now=()=>win.performance.now();
+  const blockedTouch='a,button,input,select,textarea,label,summary,pre,code,table,blockquote,p,li,h1,h2,h3,h4,h5,h6,img,video,canvas,[contenteditable]:not([contenteditable="false"]),[role="button"],[role="dialog"],[role="menu"],[role="tab"],[role="textbox"],[data-chat-flow-key],#herta-atelier-controls,#herta-atelier-mirror';
+  function backdrop(event){
+    const target=event.composedPath?.().find(node=>node?.nodeType===1)||event.target;
+    return !!target?.closest&&!target.closest(blockedTouch)&&!doc.getSelection()?.toString().trim();
+  }
+  function clearAmbient(){win.clearTimeout(ambientTimer);ambientTimer=null;ambientKind='';ambientDue=0;delete stage.dataset.hertaAmbientDelay;}
+  function ambientReady(){return options.ambient&&allowed()&&!paused()&&!loading&&!sceneMissing&&active>=0&&catalog&&state!=='action';}
+  function ambientAction(){
+    const choices=availableActions().filter(action=>!action.disabled);
+    if(!choices.length)return null;
+    if(scene==='settings'){const varied=choices.filter(action=>action.id!==lastRoomAction),pool=varied.length?varied:choices;const chosen=pool[Math.floor(Math.random()*pool.length)].id;lastRoomAction=chosen;return chosen;}
+    return choices[0].id;
+  }
+  function syncAmbient(){
+    if(!ambientReady()){clearAmbient();return;}
+    const kind=state==='away'?'return':'idle';
+    if(ambientTimer&&ambientKind===kind)return;
+    clearAmbient();ambientKind=kind;
+    // One low-frequency timer. Hidden/reduced/static states discard it rather than catching up.
+    const delay=kind==='return'?20000+Math.random()*10000:150000+Math.random()*90000;
+    ambientDue=now()+delay;stage.dataset.hertaAmbientDelay=String(Math.round(delay));
+    ambientTimer=win.setTimeout(()=>{ambientTimer=null;ambientKind='';ambientDue=0;if(!ambientReady()){syncAmbient();return;}const id=ambientAction();if(id){touchAfter=now()+45000;void trigger(id);}},delay);
+  }
+  function activity(){touches=[];press=null;if(state==='idle'){clearAmbient();syncAmbient();}}
+  function pointerDown(event){
+    if(state==='idle'){clearAmbient();syncAmbient();}
+    if(!ambientReady()||event.button!==0||event.isPrimary===false||!backdrop(event)){touches=[];press=null;return;}
+    press={x:event.clientX,y:event.clientY,at:now()};
+  }
+  function pointerUp(event){
+    const start=press;press=null;
+    if(!start||!ambientReady()||event.button!==0||event.isPrimary===false||!backdrop(event)||now()-start.at>650||Math.hypot(event.clientX-start.x,event.clientY-start.y)>10){touches=[];return;}
+    if(state!=='away'&&now()<touchAfter){touches=[];return;}
+    const t=now();touches=touches.filter(tap=>t-tap.at<1600&&Math.hypot(event.clientX-tap.x,event.clientY-tap.y)<64);
+    touches.push({x:event.clientX,y:event.clientY,at:t});
+    if(touches.length>=3){touches=[];const id=ambientAction();if(id){touchAfter=t+45000;void trigger(id);}}
+  }
+  doc.addEventListener('pointerdown',pointerDown,true);doc.addEventListener('pointerup',pointerUp,true);
+  doc.addEventListener('pointercancel',activity,true);doc.addEventListener('keydown',activity,true);doc.addEventListener('wheel',activity,{passive:true,capture:true});
   videos.forEach((v,i)=>v.addEventListener('error',()=>{if(i===active&&allowed())fail()}));
   const manifestUrl=()=>options.manifestUrl||'/herta-atelier/motion-manifest.json';
   const allowed=()=>options.enabled&&!disposed&&!failed;
@@ -20,7 +61,7 @@ export function createIdleMotion(doc,stage,onUnavailable=()=>{},onStatus=()=>{})
     stage.dataset.hertaMotion=visible?'ready':allowed()&&!catalog?'loading':'static';
     stage.dataset.hertaActionState=state;
     const next=!options.enabled?'static':failed?'unavailable':sceneMissing?'unavailable-scene':reduced.matches?'paused-reduced':doc.hidden?'paused-hidden':options.suspended?'paused-transition':loading||!visible?'loading':state==='away'?'away':state==='action'?'action':'playing';
-    stage.dataset.hertaPlayback=next;if(next!==status){status=next;onStatus(next);}
+    stage.dataset.hertaPlayback=next;if(next!==status){status=next;onStatus(next);}syncAmbient();
   }
   function cancelBlend(){clearTimeout(blendTimer);blendResolve?.();blendResolve=null;for(const v of videos){v.style.transition='none';v.style.opacity='1'}}
   function stopAll(clear=false){cancelBlend();for(const [i,v]of videos.entries()){v.pause();if(clear){prepared[i]?.cancel();prepared[i]=null;v.hidden=true;v.removeAttribute('src');v.load()}}if(clear){active=-1;delete stage.dataset.hertaClip}}
@@ -82,11 +123,12 @@ export function createIdleMotion(doc,stage,onUnavailable=()=>{},onStatus=()=>{})
   }
   function update(next){
     const before=options;options=next;const nextScene=MOTION_SCENES[next.scene]?next.scene:'home',changed=nextScene!==scene;scene=nextScene;
+    if(changed||!next.enabled){clearAmbient();touches=[];press=null;touchAfter=0;}
     if(!next.enabled){++serial;++actionSerial;cancelDelay();state='idle';failed=false;sceneMissing=false;loading=false;catalog=null;catalogPromise=null;stopAll(true);notify();return}
     if(failed){notify();return}
     if(changed||!before.enabled||active<0&&!catalogPromise){++actionSerial;cancelDelay();notify();void idle();return}
     if(before.suspended!==next.suspended||before.opacity!==next.opacity)resume();else notify();
   }
   doc.addEventListener('visibilitychange',resume);reduced.addEventListener('change',resume);
-  return {update,trigger,availableActions,getState:()=>({scene,state,status,clip:stage.dataset.hertaClip,loading,sceneMissing}),dispose(){disposed=true;++serial;++actionSerial;cancelDelay();stopAll(true);plane.remove();doc.removeEventListener('visibilitychange',resume);reduced.removeEventListener('change',resume);for(const key of ['hertaMotion','hertaPlayback','hertaActionState','hertaClip'])delete stage.dataset[key]}};
+  return {update,trigger,availableActions,getState:()=>({scene,state,status,clip:stage.dataset.hertaClip,loading,sceneMissing,ambient:{kind:ambientKind,dueIn:Math.max(0,ambientDue-now()),touches:touches.length}}),dispose(){disposed=true;++serial;++actionSerial;clearAmbient();cancelDelay();stopAll(true);plane.remove();doc.removeEventListener('pointerdown',pointerDown,true);doc.removeEventListener('pointerup',pointerUp,true);doc.removeEventListener('pointercancel',activity,true);doc.removeEventListener('keydown',activity,true);doc.removeEventListener('wheel',activity,true);doc.removeEventListener('visibilitychange',resume);reduced.removeEventListener('change',resume);for(const key of ['hertaMotion','hertaPlayback','hertaActionState','hertaClip','hertaAmbientDelay'])delete stage.dataset[key]}};
 }

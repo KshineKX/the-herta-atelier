@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "version": "0.4.0-beta.11",
+  "targetReceipt": "0.4.0-beta.10",
+  "files": [
+    {
+      "path": "tools/trial.mjs",
+      "sha256": "f56ef9916867bee486fc15d91645f25e0a5ad8e76815d8dd006f1b5e542d61f3"
+    },
+    {
+      "path": "tools/profile.mjs",
+      "sha256": "a6b425c124cfe8565f41114eb04b0c69a7d31ba77099a41bba0ef0945ecec3b4"
+    },
+    {
+      "path": "tools/host.mjs",
+      "sha256": "39120221dd11bfbb34a9d9dbb9b29d7ae094a81836ab6b05e2011c283ef8c555"
+    },
+    {
+      "path": "tools/manage.mjs",
+      "sha256": "8bc1f78be6d803b4c0d78ec366d4650ed083da244f3853f2ce9f6eecbdae8c92"
+    },
+    {
+      "path": "tools/bootstrap.ps1",
+      "sha256": "02672a2a09311696f19114ad447932e36f9a36c4cc38d01f1f54217c6f601fd2"
+    }
+  ]
+}
