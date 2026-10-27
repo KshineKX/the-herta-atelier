@@ -13,7 +13,7 @@ export function createMirror(doc, { base, onOpen = () => {}, onInfo = () => {} }
   const panel = doc.createElement('section'); panel.className = 'herta-mirror-panel'; panel.hidden = true;
   panel.id='herta-mirror-gallery';trigger.setAttribute('aria-controls',panel.id);
   panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', '大黑塔的藏镜'); panel.setAttribute('aria-modal', 'false');
-  const glass = doc.createElement('div'); glass.className = 'herta-mirror-glass';
+  const glass = doc.createElement('button'); glass.type='button'; glass.className = 'herta-mirror-glass';glass.setAttribute('aria-label','随机切换藏镜图片');
   const picture = doc.createElement('img'); picture.alt = ''; picture.draggable = false;
   const fallback = doc.createElement('span'); fallback.textContent = '图库为空，打开设置查看本机图库路径'; fallback.style.cssText = 'font-size:13px;line-height:1.8;white-space:pre-line;text-align:center;padding:30px;overflow-wrap:anywhere'; fallback.hidden = true;
   glass.append(picture, fallback);
@@ -27,6 +27,7 @@ export function createMirror(doc, { base, onOpen = () => {}, onInfo = () => {} }
   const previous=doc.createElement('button');previous.type='button';previous.textContent='‹';previous.setAttribute('aria-label','上一张藏镜图片');
   const next=doc.createElement('button');next.type='button';next.textContent='›';next.setAttribute('aria-label','下一张藏镜图片');
   const counter=doc.createElement('span');counter.setAttribute('aria-live','polite');counter.textContent='点击镜面换一幅';footer.append(previous,counter,next);
+  const importButton=doc.createElement('button');importButton.type='button';importButton.textContent='＋';importButton.setAttribute('aria-label','导入本地图片');importButton.title='导入本地图片';footer.append(importButton);
   panel.append(heading, glass, footer, picker);
   root.append(trigger, panel); doc.body.append(root);
 
@@ -130,6 +131,7 @@ export function createMirror(doc, { base, onOpen = () => {}, onInfo = () => {} }
   glass.onclick = () => random();
   previous.onclick=event=>{event.stopPropagation();index--;render();};
   next.onclick=event=>{event.stopPropagation();index++;render();};
+  importButton.onclick=()=>picker.click();
   picker.onchange = async () => { const files = [...picker.files]; picker.value = ''; await addFiles(files); };
   panel.addEventListener('dragover', (event) => { event.preventDefault(); });
   panel.addEventListener('drop', async (event) => { event.preventDefault(); await addFiles([...event.dataTransfer.files]); });

@@ -1,9 +1,6 @@
 // Genuine authored motion only. No image deformation or procedural body warp.
-export const MOTION_SCENES = {
-  home: { idle:'home-idle', actions:{ leave:{label:'离席',clips:['home-rise','home-exit'],end:'away'}, return:{label:'回来',clips:['home-enter','home-sit']} } },
-  chat: { idle:'campus-idle', actions:{ greet:{label:'回头回应',clips:['campus-greet','campus-reset'],holdAfter:0} } },
-  settings: { idle:'room-idle', actions:{ roll:{label:'仰躺看你',clips:['room-roll','room-roll-reset'],holdAfter:0}, tilt:{label:'歪头看你',clips:['room-tilt','room-tilt-reset'],holdAfter:0} } },
-};
+import { SCENE_DEFINITIONS } from './scenes.js';
+export const MOTION_SCENES = Object.fromEntries(Object.entries(SCENE_DEFINITIONS).map(([id,value])=>[id,value.motion]));
 
 export function createIdleMotion(doc,stage,onUnavailable=()=>{},onStatus=()=>{}) {
   const win=doc.defaultView,reduced=win.matchMedia('(prefers-reduced-motion: reduce)');

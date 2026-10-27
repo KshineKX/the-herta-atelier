@@ -9,3 +9,4 @@ packages/boot/assets/videos/*
 Thumbs.db
 release-manifest.json
 **/runtime-config.json
+packages/skin/src/project.generated.js

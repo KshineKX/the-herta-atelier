@@ -1,0 +1,12 @@
+import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import {createRequire} from 'node:module';import {fileURLToPath} from 'node:url';import {desktopMetadata} from './read-asar.mjs';
+const cache=new Map();
+export function inspectHost({resources,profileDir,env=process.env}={}){
+ const result={desktopVersion:null,schemaVersion:null,schemaSource:null,profileSchemaVersion:null,tested:false,compatibility:'unknown'};
+ if(profileDir){try{const require=createRequire(path.join(profileDir,'package.json'));const entry=require.resolve('@deepseek-ai/schemastery');let dir=path.dirname(entry);for(let i=0;i<5;i++,dir=path.dirname(dir)){const file=path.join(dir,'package.json');if(fs.existsSync(file)){const pkg=JSON.parse(fs.readFileSync(file));if(pkg.name==='@deepseek-ai/schemastery'){result.profileSchemaVersion=pkg.version;break;}}}}catch{}}
+ let baseline={versions:{},requiredAnchors:[]};try{baseline=JSON.parse(fs.readFileSync(fileURLToPath(new URL('../packages/skin/host-compatibility.json',import.meta.url)),'utf8'));}catch{}
+ const candidates=resources?[path.join(resources,'app.asar')]:[env.DSH_RESOURCES_PATH&&path.join(env.DSH_RESOURCES_PATH,'app.asar'),path.join(env.LOCALAPPDATA||'','Programs','DeepSeek Harness','resources','app.asar'),path.join(env.USERPROFILE||os.homedir(),'AppData','Local','Programs','DeepSeek Harness','resources','app.asar'),path.join(env.ProgramFiles||'','DeepSeek Harness','resources','app.asar')].filter(Boolean);
+ const archive=candidates.find(file=>fs.existsSync(file));
+ if(archive){try{const stat=fs.statSync(archive),key=archive+':'+stat.mtimeMs+':'+stat.size+':'+baseline.requiredAnchors.join(',');let metadata=cache.get(key);if(!metadata){metadata=desktopMetadata(archive,baseline.requiredAnchors);cache.clear();cache.set(key,metadata);}Object.assign(result,metadata);const known=baseline.versions[result.desktopVersion];result.compatibility=known?.status||'unrecorded-host';result.evidenceScope=known?.scope||'No recorded native evidence';result.tested=!!known&&metadata.contract.matched;}catch(error){result.warning=error.message;}}
+ result.schemaVersion=result.desktopSchemaVersion||result.profileSchemaVersion||null;result.schemaSource=result.desktopSchemaVersion?'desktop':result.profileSchemaVersion?'profile-fallback':null;return result;
+}
+export function hasBootSchema(info){const match=/^(\d+)\.(\d+)\.(\d+)/.exec(info.schemaVersion||'');return !!match&&(+match[1]>3||+match[1]===3&&(+match[2]>18||+match[2]===18&&+match[3]>=4));}

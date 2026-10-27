@@ -6,13 +6,13 @@ The Herta Atelier 是 Kshine 策划、确定美术方向并维护的 DSH 主题�
 
 | 内容 | 文件 | 用途 |
 |---|---|---|
-| 前端源码 | packages/skin/src/client.js | 布局、主题色、阅读保护、设置和装饰规则；CSS 也包含在该文件中 |
-| 藏镜源码 | packages/skin/src/mirror.js | 挂件、切图、导入与交互 |
+| 前端源码 | packages/skin/src/client.js、styles.js、palette.js、scenes.js、host.js、theme-icon.js | 交互、样式、调色、场景、宿主适配和图标分开维护，构建为一个客户端包 |
+| 藏镜源码 | packages/skin/src/mirror.js | 私人图库、切图、导入与交互；额度挂件是另一个插件 |
 | 本机后端源码 | packages/skin/lib/index.js、gallery.js、settings.js | 注册静态资源、图库接口和配置；这些 JS 是直接运行的源码，不是二进制 |
 | 开屏源码 | packages/boot/entry.js、src/ | 在上游 MIT 模块基础上定制的开屏逻辑 |
 | 安装工具源码 | tools/profile.mjs、manage.mjs、bootstrap.ps1 | 安装、升级、卸载、备份和状态检查 |
 | 构建/发布脚本 | packages/skin/build.mjs、tools/build.mjs、release.mjs | 将源码整理为 DSH 可加载文件和 ZIP |
-| 验证代码 | tests/、packages/boot/verify/ | 回归、兼容和交互验证 |
+| 验证代码 | tests/、packages/boot/verify/ | 安装、恢复、媒体路由、压缩包、Git 取源与浏览器交互；各自验收状态见 ACCEPTANCE |
 | 图形资源 | packages/skin/assets/ | SVG、字体，以及完整主题内置的三组画像 |
 
 src 是主要修改入口，部分 lib 文件是构建生成，另一些后端 lib 文件就是直接维护的源码；不能将整个 lib 目录一概当成生成物。安装包供直接使用，源码供修改与维护。

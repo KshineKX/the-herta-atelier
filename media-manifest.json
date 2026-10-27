@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "reviewedBaseline": "v0.4.0-beta.11 plus documented preview images",
+  "files": [
+    {
+      "path": "docs/previews/motion-beta11.gif",
+      "bytes": 2514058,
+      "sha256": "7846d29dfada3fe06c38972f7885e5230cebd5346123ad569f5b54e9f6677f24"
+    },
+    {
+      "path": "docs/previews/motion-beta11.mp4",
+      "bytes": 526517,
+      "sha256": "1aee56b2d7d8909cf522d3fd1fdb7aba4ab8f1319eb28f9e074066a6c9c3a712"
+    },
+    {
+      "path": "docs/screenshots/overview-beta11-dark.jpg",
+      "bytes": 380424,
+      "sha256": "8bf8abc74efdc72e9559a5de91dde4df5c66c824cf4a390b0947218d41058e4b"
+    },
+    {
+      "path": "docs/screenshots/overview-beta11-light.jpg",
+      "bytes": 280027,
+      "sha256": "5505abee71fce04c13da017e318c9ca06a1227da18cb3687c4be51fcea9b04c2"
+    },
+    {
+      "path": "docs/screenshots/reading-dark.jpg",
+      "bytes": 308259,
+      "sha256": "0c520174332eab7d49bbb01fc2d46520e80275ec05b48799ace564c90ccbd469"
+    },
+    {
+      "path": "docs/screenshots/reading-light.jpg",
+      "bytes": 291756,
+      "sha256": "1f0e3d12d54cccd43baba47db600dfae3503df69ec9315ca0d0b1e690448e767"
+    },
+    {
+      "path": "packages/skin/assets/art-campus-soft.webp",
+      "bytes": 2016638,
+      "sha256": "b18eb7facfbe1ede4a15781ed347da71284941ae8ea47ce34a9d2a66c6a7a5f2"
+    },
+    {
+      "path": "packages/skin/assets/art-campus-ultra.webp",
+      "bytes": 17036488,
+      "sha256": "52eb7dbc3720ca9a20d965d91de978aa21893551444683c2502c0608aefb9165"
+    },
+    {
+      "path": "packages/skin/assets/art-home-dark-crisp.webp",
+      "bytes": 2049616,
+      "sha256": "0ea6887603a20e92df7f41584c3a89feba79de0ec63f925fe603dd3bf93f777b"
+    },
+    {
+      "path": "packages/skin/assets/art-home-dark-soft.webp",
+      "bytes": 1633002,
+      "sha256": "46b2f7f009fbbb3e67f6b0a783209165162b4fc0380dc672b244591a76abb3ad"
+    },
+    {
+      "path": "packages/skin/assets/art-home-dark-ultra.webp",
+      "bytes": 17574740,
+      "sha256": "adf42c1e213cd90b4b8b5172aae3c6fd22f504508a03052d5da267be6cce93b6"
+    },
+    {
+      "path": "packages/skin/assets/art-home-light-crisp.webp",
+      "bytes": 2199140,
+      "sha256": "dc0aad9a1d5a525fd7acd6829a076d8ebd5dd9cab45d2fea2af6b33c668de302"
+    },
+    {
+      "path": "packages/skin/assets/art-home-light-soft.webp",
+      "bytes": 1787026,
+      "sha256": "9dfe5076d2c533e2ab5c170a1df28813a10b1c9a0959401ee44486f4a53678d4"
+    },
+    {
+      "path": "packages/skin/assets/art-home-light-ultra.webp",
+      "bytes": 19009150,
+      "sha256": "bdefaf5b0ec808c21f9d05a0e88610168c8b7dbceacf3dce4140a499cede5161"
+    },
+    {
+      "path": "packages/skin/assets/art-room-soft.webp",
+      "bytes": 1807092,
+      "sha256": "96c711341e2d231ad31e143f172643ba79c85ecff13eb80c434e2b7f6f12891d"
+    },
+    {
+      "path": "packages/skin/assets/art-room-ultra.webp",
+      "bytes": 14384502,
+      "sha256": "87ca4b72bb740565d07734d44b3532fa81a29b536fa14f38c67c4f77383c5ffd"
+    },
+    {
+      "path": "packages/skin/assets/herta-serif-title.ttf",
+      "bytes": 8104,
+      "sha256": "9ef46aa1c46dfe156642ffd5402a2a942dd980513c715fc02c1d5e30cc159245"
+    },
+    {
+      "path": "packages/skin/motion/campus-greet/video.mp4",
+      "bytes": 8389188,
+      "sha256": "f1265c2582ec6dcc91d8f9d549940bfa31ca9f85763f496f5eda3220239cec33"
+    },
+    {
+      "path": "packages/skin/motion/campus-idle/video.mp4",
+      "bytes": 4436477,
+      "sha256": "9f23cd87d362e0f9c36e4985894bf34ceddc182f6aca1e261662714f921760a9"
+    },
+    {
+      "path": "packages/skin/motion/campus-reset/video.mp4",
+      "bytes": 3928850,
+      "sha256": "b0157a1aa4812f48e049babd8e453ca5af9d948d68094b31584dafd19326b2fc"
+    },
+    {
+      "path": "packages/skin/motion/home-enter/video.mp4",
+      "bytes": 33440195,
+      "sha256": "f64e795c150d3e94e5a0fc10bc6742accaea8f613a095d50a92404a20d73efa8"
+    },
+    {
+      "path": "packages/skin/motion/home-exit/video.mp4",
+      "bytes": 34313373,
+      "sha256": "4de3451d775c7e55958a931119974cdce90f32d07bfa91820d7ed5b278c8212b"
+    },
+    {
+      "path": "packages/skin/motion/home-idle/video.mp4",
+      "bytes": 24905166,
+      "sha256": "e7720c77cd958a94adfd2c6a2c6beb57889503e29aba36967a814d8f92f5741c"
+    },
+    {
+      "path": "packages/skin/motion/home-rise/video.mp4",
+      "bytes": 40146311,
+      "sha256": "1be2046e69b4d37e7052ef8240dff58fa77b6e63777a67498d21ec22a4f28fd0"
+    },
+    {
+      "path": "packages/skin/motion/home-sit/video.mp4",
+      "bytes": 40904857,
+      "sha256": "d52e86b6673ab51c5ee85c209a33d43d0859caceb650c3dbca327716ce614e54"
+    },
+    {
+      "path": "packages/skin/motion/room-idle/video.mp4",
+      "bytes": 3247113,
+      "sha256": "06ff6dbe07d9c2ddf6a36ead638041fe0bf3d39b40c89752fa931cc6b331f2ac"
+    },
+    {
+      "path": "packages/skin/motion/room-roll-reset/video.mp4",
+      "bytes": 16566304,
+      "sha256": "abd214f2c20d1b4b0a46f5f502d1d2ddecd7e7635a2767dd8af18a33d6f5510e"
+    },
+    {
+      "path": "packages/skin/motion/room-roll/video.mp4",
+      "bytes": 9799171,
+      "sha256": "dd4febe0c4fb98d2701882a7b6a09100726d692d791a1cbcb9412022512e87a2"
+    },
+    {
+      "path": "packages/skin/motion/room-tilt-reset/video.mp4",
+      "bytes": 3129624,
+      "sha256": "06f93a7c335ffcd86550ff87080573f67eb015bc86873192d38a043c6d50c263"
+    },
+    {
+      "path": "packages/skin/motion/room-tilt/video.mp4",
+      "bytes": 2974265,
+      "sha256": "1a1c3b3394cd3550988f08bf389f1868b2263fd8eae4acb63ae807e782ee4eec"
+    }
+  ]
+}

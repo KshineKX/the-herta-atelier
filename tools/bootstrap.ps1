@@ -1,4 +1,4 @@
-param([ValidateSet('install','uninstall','doctor','gallery','import-video','rollback','recover-beta10')][string]$Action='doctor',[switch]$Apply,[switch]$WithBoot,[switch]$Open,[string]$InputFile='',[string]$DshHome='',[string]$Profile='desktop',[string]$Backup='',[string]$DataDir='')
+param([ValidateSet('install','uninstall','doctor','gallery','import-video','rollback','recover-beta10','recover-install')][string]$Action='doctor',[switch]$Apply,[switch]$WithBoot,[switch]$Open,[string]$InputFile='',[string]$DshHome='',[string]$Profile='desktop',[string]$Backup='',[string]$DataDir='')
 $ErrorActionPreference='Stop'
 try {
   $hertaRoot=Split-Path $PSScriptRoot -Parent

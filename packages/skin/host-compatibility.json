@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "primaryBaseline": "0.2.1-rc.3",
+  "versions": {
+    "0.2.1-rc.2": {"status": "historical-baseline", "scope": "Historical beta tests; current build still requires native acceptance."},
+    "0.2.1-rc.3": {"status": "beta-observed", "scope": "beta.11 native install and user feedback, thirteen media endpoints and exact rollback preflight. This is not certification of every newer build or long-run performance."}
+  },
+  "requiredAnchors": ["data-composer-card", "data-conversation-region", "data-chat-flow-key"]
+}

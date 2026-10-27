@@ -452,6 +452,14 @@ const resolvedPkg = JSON.parse(readFileSync(join(dirname(dirname(resolved)), 'pa
 console.log('  ' + resolvedPkg.name + '@' + resolvedPkg.version + '  ->  ' + resolved)
 check('resolved copy supports .volatile()', typeof z.boolean().volatile === 'function')
 
+const invalidIndex = mount(makeCtx(), Config({}))
+for (const value of [undefined, {}, Object.freeze([])]) {
+  let escaped = false
+  try { invalidIndex.listeners.get('webserver/index-inject')(value) } catch { escaped = true }
+  check('invalid index table never escapes into native rendering', !escaped)
+}
+equal('index integration failure warns only once', invalidIndex.log.length, 1)
+
 rmSync(scratch, { recursive: true, force: true })
 
 console.log('\n' + (failures === 0 ? 'PASS' : 'FAIL') + ' — ' + (checks - failures) + '/' + checks + ' checks')

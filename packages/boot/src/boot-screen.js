@@ -914,7 +914,9 @@
   globalThis.setTimeout(function () {
     if (parts.root.getAttribute('data-state') === 'leaving') return
     if (namespace.bootedAt !== null) return
-    attention('启动较慢，点击继续')
+    if (ENTER_MODE === 'click') return
+    namespace.timeoutReleased = true
+    enter()
   }, HOLD_MS)
 
   // `?dshbootdiag=1` turns the hint line into a live readout of the clip and the

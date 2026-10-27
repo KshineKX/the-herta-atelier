@@ -160,15 +160,14 @@ function patchOffsets(moovBytes, tables, shift) {
   for (const table of tables) {
     for (let index = 0; index < table.count; index += 1) {
       const at = table.dataAt + index * table.width
-      let value = table.width === 4 ? out.readUInt32BE(at) : Number(out.readBigUInt64BE(at))
-      const moved = value + shift
       if (table.width === 4) {
-        if (moved < 0 || moved > 0xffffffff) {
-          throw new Error('a 32-bit chunk offset overflowed; the file needs co64, use ffmpeg')
-        }
+        const moved = out.readUInt32BE(at) + shift
+        if (moved < 0 || moved > 0xffffffff) throw new Error('a 32-bit chunk offset overflowed; the file needs co64')
         out.writeUInt32BE(moved, at)
       } else {
-        out.writeBigUInt64BE(BigInt(moved), at)
+        const moved = out.readBigUInt64BE(at) + BigInt(shift)
+        if (moved < 0n || moved > 0xffffffffffffffffn) throw new Error('a 64-bit chunk offset overflowed')
+        out.writeBigUInt64BE(moved, at)
       }
     }
   }
@@ -234,9 +233,9 @@ export function remux(file, target, writeTo) {
     const newAt = newTables[index].dataAt
     for (let entry = 0; entry < tables[index].count; entry += 1) {
       const delta = tables[index].width
-      const was = moovBytes.readUInt32BE(oldAt + entry * delta)
-      const now = newMoov.readUInt32BE(newAt + entry * delta)
-      if (now !== was + layout.shift) throw new Error(`entry ${String(entry)} not shifted correctly`)
+      const was = delta === 4 ? BigInt(moovBytes.readUInt32BE(oldAt + entry * delta)) : moovBytes.readBigUInt64BE(oldAt + entry * delta)
+      const now = delta === 4 ? BigInt(newMoov.readUInt32BE(newAt + entry * delta)) : newMoov.readBigUInt64BE(newAt + entry * delta)
+      if (now !== was + BigInt(layout.shift)) throw new Error(`entry ${String(entry)} not shifted correctly`)
     }
   }
 
@@ -249,29 +248,29 @@ export function remux(file, target, writeTo) {
   return `WROTE ${name} -> ${basename(out)}（moov 前移 ${KiB}KiB，${String(tables.length)} 张偏移表已重写）`
 }
 
-/**
- * Whether `moov` precedes `mdat` in the leading part of a file.
- *
- * The same 64 KiB window and the same reasoning as the Host half's manifest read:
- * the order of the first two boxes is not the answer, because these clips carry a
- * ~21 KiB `uuid` metadata box before the media data.
- * @param file - absolute path.
- * @returns true when `moov` comes first, false when `mdat` does, undefined when
- *   neither box is inside the window.
- */
+/** Read top-level headers by offset, skipping payloads of any supported size. */
 export async function leadingBox(file) {
   let handle
   try {
     handle = await open(file, 'r')
-    const head = Buffer.alloc(65536)
-    const { bytesRead } = await handle.read(head, 0, head.length, 0)
+    const { size: length } = await handle.stat()
+    if (!Number.isSafeInteger(length)) return undefined
+    const header = Buffer.alloc(16)
     let offset = 0
-    while (offset + 8 <= bytesRead) {
-      const type = head.toString('latin1', offset + 4, offset + 8)
+    for (let boxes = 0; offset + 8 <= length && boxes < 10000; boxes++) {
+      const { bytesRead } = await handle.read(header, 0, Math.min(16, length - offset), offset)
+      if (bytesRead < 8) return undefined
+      let size = header.readUInt32BE(0), minimum = 8
+      const type = header.toString('latin1', 4, 8)
+      if (size === 1) {
+        if (bytesRead < 16) return undefined
+        const wide = header.readBigUInt64BE(8)
+        if (wide > BigInt(Number.MAX_SAFE_INTEGER)) return undefined
+        size = Number(wide); minimum = 16
+      } else if (size === 0) size = length - offset
+      if (size < minimum || size > length - offset) return undefined
       if (type === 'moov') return true
       if (type === 'mdat') return false
-      const size = head.readUInt32BE(offset)
-      if (size < 8) break
       offset += size
     }
     return undefined

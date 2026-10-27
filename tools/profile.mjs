@@ -1,3 +1,6 @@
+import {atomicWrite,writeJson,beginCore,finishCore,switchPackageLink,recoverInterrupted,assertNoInterrupted,withoutManagedMarkers,patchMatchesExpected} from './transaction.mjs';
+import {RECOVERY_FILES} from './recovery-files.mjs';
+export {withoutManagedMarkers,patchMatchesExpected} from './transaction.mjs';
 import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import crypto from 'node:crypto';import {fileURLToPath} from 'node:url';import {inspectHost,hasBootSchema} from './host.mjs';
 export const projectRoot=fileURLToPath(new URL('../',import.meta.url));
 const BEGIN='# BEGIN THE-HERTA-ATELIER MANAGED',END='# END THE-HERTA-ATELIER MANAGED';
@@ -5,7 +8,7 @@ const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 const read=p=>fs.readFileSync(p,'utf8');const json=p=>JSON.parse(read(p));
 const within=(p,base)=>p===base||p.startsWith(base+path.sep);
 const exists=p=>{try{fs.lstatSync(p);return true;}catch{return false;}};
-const write=(p,text)=>{fs.mkdirSync(path.dirname(p),{recursive:true});const temp=p+'.herta.tmp';fs.writeFileSync(temp,text);fs.renameSync(temp,p);};
+const write=atomicWrite;
 const clone=x=>structuredClone(x);
 function format(j,old){const indent=/\n([ \t]+)"/.exec(old)?.[1]||'  ';return JSON.stringify(j,null,indent).replaceAll('\n',old.includes('\r\n')?'\r\n':'\n')+(old.includes('\r\n')?'\r\n':'\n');}
 export function locations(options={}){
@@ -15,14 +18,6 @@ export function locations(options={}){
  return {dshHome,profile,dataDir,profileDir:path.join(dshHome,'profiles',profile),stateFile:path.join(dataDir,'install-state-'+profile+'.json')};
 }
 function ownedBlock(text){const a=text.indexOf(BEGIN);if(a<0)return null;const b=text.indexOf(END,a);if(b<0||text.indexOf(BEGIN,a+BEGIN.length)>=0)throw Error('Ambiguous managed YAML block');const end=b+END.length+(text.slice(b+END.length).startsWith('\r\n')?2:text[b+END.length]==='\n'?1:0);return {start:a,end,text:text.slice(a,end)};}
-// The host may delete these two comment lines. No whitespace, YAML value or
-// other comment normalization is permitted by this compatibility rule.
-export function withoutManagedMarkers(text){
- const lines=text.match(/[^\n]*\n|[^\n]+$/g)||[];let begin=0,end=0;
- const result=lines.filter(line=>{const value=line.replace(/\r?\n$/,'');if(value===BEGIN){begin++;return false;}if(value===END){end++;return false;}return true;}).join('');
- return begin===1&&end===1?result:null;
-}
-export function patchMatchesExpected(actual,expected){return actual===expected||withoutManagedMarkers(expected)===actual;}
 function managedBlockIn(text,state){
  const block=ownedBlock(text);if(block){if(!state||block.text!==state.managedBlock)throw Error('Managed patch block was edited or is unowned; refusing to overwrite it.');return block;}
  if(!state)return null;
@@ -72,7 +67,7 @@ export function inspectPatch(text){
  return {readOnly:true,managedBlocks,entries,duplicateIds:entries.filter(x=>x.count>1),legacyHertaEntries:managedBlocks===0?(counts.get('ui-skin-herta-atelier')||0):null,repairApplied:false};
 }
 export function makePlan(options={}){
- const loc=locations(options),source=path.resolve(options.sourceRoot||projectRoot),manifestFile=path.join(loc.profileDir,'package.json'),patchFile=path.join(loc.profileDir,'cordis.patch.yml');
+ const loc=locations(options);assertNoInterrupted(loc);const source=path.resolve(options.sourceRoot||projectRoot),manifestFile=path.join(loc.profileDir,'package.json'),patchFile=path.join(loc.profileDir,'cordis.patch.yml');
  if(!fs.existsSync(manifestFile)||!fs.existsSync(patchFile))throw Error('DSH desktop profile not found. Start DSH once, or pass --dsh-home / --profile.');
  const raw=read(manifestFile),manifest=JSON.parse(raw),patch=read(patchFile),release=json(path.join(source,'release-manifest.json'));
  if(!manifest.dsh?.profile||!Array.isArray(manifest.dsh.profile.bundles))throw Error('Unsupported DSH profile format; nothing was changed.');
@@ -102,42 +97,42 @@ export function makePlan(options={}){
  return {...loc,source,manifestFile,patchFile,raw,manifest,patch,nextRaw:format(next,raw),nextPatch,managedBlock,separator,release,versionDir,names,targets,previousState:state,host,withBoot,bundledSchema};
 }
 export function publicPlan(plan){return {version:plan.release.version,edition:plan.release.edition,profile:plan.profile,installDirectory:plan.versionDir,dataDirectory:plan.dataDir,optionalBoot:plan.withBoot,bundledBootSchema:plan.bundledSchema,host:plan.host,actions:['verify release hashes','back up profile and prior links','install runtime','update owned profile entries','activate Herta theme'],nativeAcceptance:'pending restart'};}
+function installManagement(plan){
+ const base=path.join(plan.dataDir,'management',plan.release.version),tools=path.join(base,'tools');fs.mkdirSync(tools,{recursive:true});
+ for(const name of RECOVERY_FILES)fs.copyFileSync(fileURLToPath(new URL('./'+name,import.meta.url)),path.join(tools,name));
+ const compatibility=path.join(plan.source,'packages/skin/host-compatibility.json');if(fs.existsSync(compatibility)){const destination=path.join(base,'packages/skin/host-compatibility.json');fs.mkdirSync(path.dirname(destination),{recursive:true});fs.copyFileSync(compatibility,destination);}
+ writeJson(path.join(base,'installed-location.json'),{dshHome:plan.dshHome,dataDir:plan.dataDir,profile:plan.profile});
+ for(const[name,action]of Object.entries({'Check.cmd':'doctor','Rollback.cmd':'rollback','Uninstall.cmd':'uninstall','OpenGallery.cmd':'gallery','RecoverInstall.cmd':'recover-install'})){
+  const target=path.join(plan.dataDir,name),marker='REM THE-HERTA-ATELIER MANAGED ACTION';if(fs.existsSync(target)&&!read(target).includes(marker))continue;
+  write(target,'@echo off\r\n'+marker+'\r\nsetlocal DisableDelayedExpansion\r\npowershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0management\\'+plan.release.version+'\\tools\\installed-action.ps1" -Action '+action+'\r\npause\r\n');
+ }
+}
 export function install(plan,{onPhase=()=>{}}={}){
  const current=fs.existsSync(plan.stateFile)?json(plan.stateFile):null;
+ const entries=plan.release.files.filter(entry=>entry.path.startsWith('packages/skin/')||(plan.withBoot&&entry.path.startsWith('packages/boot/')));
  if(current?.version===plan.release.version&&read(plan.manifestFile)===plan.nextRaw&&patchMatchesExpected(read(plan.patchFile),plan.nextPatch)){
-   const files=plan.release.files.filter(e=>e.path.startsWith('packages/skin/')||(plan.withBoot&&e.path.startsWith('packages/boot/')));
-   if(files.every(e=>fs.existsSync(path.join(plan.versionDir,e.path)))){for(const e of files)if(hash(fs.readFileSync(path.join(plan.versionDir,e.path)))!==e.sha256)throw Error('Installed runtime was edited: '+e.path);return {status:'already-installed',version:current.version};}
+  if(entries.every(entry=>fs.existsSync(path.join(plan.versionDir,entry.path)))){for(const entry of entries)if(hash(fs.readFileSync(path.join(plan.versionDir,entry.path)))!==entry.sha256)throw Error('Installed runtime was edited: '+entry.path);return{status:'already-installed',version:current.version};}
  }
  if(read(plan.manifestFile)!==plan.raw||read(plan.patchFile)!==plan.patch)throw Error('Profile changed after planning; run again.');
- const stamp=new Date().toISOString().replace(/[:.]/g,'-'),backup=path.join(plan.dataDir,'backups',stamp+'-'+plan.profile),beforeLinks={};
+ const backup=path.join(plan.dataDir,'backups',new Date().toISOString().replace(/[:.]/g,'-')+'-'+plan.profile+'-'+crypto.randomUUID()),beforeLinks={};
  fs.mkdirSync(backup,{recursive:true});fs.copyFileSync(plan.manifestFile,path.join(backup,'package.json'));fs.copyFileSync(plan.patchFile,path.join(backup,'cordis.patch.yml'));
  for(const name of plan.names){const link=path.join(plan.profileDir,'node_modules',name);beforeLinks[name]=exists(link)?fs.realpathSync(link):null;}
- const oldState=fs.existsSync(plan.stateFile)?read(plan.stateFile):null;const changedLinks=[];
+ const original=clone(plan.previousState?.original||{dependencies:{},bundles:[],links:{}});
+ for(const name of plan.names)if(!Object.hasOwn(original.dependencies,name)){original.dependencies[name]=plan.manifest.dependencies?.[name]??null;original.links[name]=beforeLinks[name];if(plan.manifest.dsh.profile.bundles.includes(name))original.bundles.push(name);}
+ const state={schemaVersion:1,version:plan.release.version,sourceCommit:plan.release.source?.commit||null,releaseManifestSha256:hash(fs.readFileSync(path.join(plan.source,'release-manifest.json'))),profileDir:plan.profileDir,dataDir:plan.dataDir,backup,managedBlock:plan.managedBlock,installedPatch:plan.nextPatch,separator:plan.previousState?.separator??plan.separator,original,installed:Object.fromEntries(plan.names.map(name=>[name,{dependency:'link:'+plan.targets[name].replaceAll('\\','/'),target:plan.targets[name]}]))};
+ const staging=path.join(plan.dataDir,'versions','.stage-'+plan.release.version+'-'+crypto.randomUUID()),transaction=beginCore(plan,backup,beforeLinks,state,staging);
  try{
-  for(const e of plan.release.files.filter(e=>e.path.startsWith('packages/skin/')||(plan.withBoot&&e.path.startsWith('packages/boot/')))){
-    const out=path.resolve(plan.versionDir,e.path);if(!within(out,plan.versionDir))throw Error('Install path escaped');
-    if(fs.existsSync(out)){if(hash(fs.readFileSync(out))!==e.sha256)throw Error('An installed version was modified; use a new version.');continue;}
-    fs.mkdirSync(path.dirname(out),{recursive:true});fs.copyFileSync(path.join(plan.source,e.path),out);
-  }
-  fs.mkdirSync(path.join(plan.dataDir,'gallery'),{recursive:true});
-  if(!fs.existsSync(path.join(plan.dataDir,'settings.json')))write(path.join(plan.dataDir,'settings.json'),JSON.stringify({schemaVersion:1,galleryDirectory:path.join(plan.dataDir,'gallery')},null,2)+'\n');
-  const locator=path.join(plan.targets['dsh-herta-atelier'],'runtime-config.json');
-  if(fs.existsSync(locator)&&json(locator).dataDirectory!==plan.dataDir)throw Error('Installed data locator was modified');
-  if(!fs.existsSync(locator))write(locator,JSON.stringify({schemaVersion:1,dataDirectory:plan.dataDir},null,2)+'\n');
-  if(plan.withBoot){const bootRoot=plan.targets['dsh-boot-animation'],sdk=path.join(bootRoot,'vendor/packages'),modules=path.join(bootRoot,'node_modules');if(!fs.existsSync(modules))fs.cpSync(sdk,modules,{recursive:true,dereference:true});const videos=path.join(bootRoot,'assets/videos');fs.mkdirSync(path.dirname(videos),{recursive:true});if(fs.existsSync(videos)&&fs.readdirSync(videos).length===0)fs.rmdirSync(videos);if(!exists(videos))fs.symlinkSync(path.join(plan.dataDir,'boot-videos'),videos,process.platform==='win32'?'junction':'dir');}
-  for(const name of plan.names){const link=path.join(plan.profileDir,'node_modules',name);fs.mkdirSync(path.dirname(link),{recursive:true});if(exists(link)&&fs.realpathSync(link)===plan.targets[name])continue;changedLinks.push(name);if(exists(link))fs.unlinkSync(link);fs.symlinkSync(plan.targets[name],link,process.platform==='win32'?'junction':'dir');}
-  write(plan.manifestFile,plan.nextRaw);write(plan.patchFile,plan.nextPatch);onPhase('profile-written');
-  const original=clone(plan.previousState?.original||{dependencies:{},bundles:[],links:{}});
-  for(const name of plan.names)if(!Object.hasOwn(original.dependencies,name)){original.dependencies[name]=plan.manifest.dependencies?.[name]??null;original.links[name]=beforeLinks[name];if(plan.manifest.dsh.profile.bundles.includes(name))original.bundles.push(name);}
-  const state={schemaVersion:1,version:plan.release.version,profileDir:plan.profileDir,dataDir:plan.dataDir,backup,managedBlock:plan.managedBlock,installedPatch:plan.nextPatch,separator:plan.previousState?.separator??plan.separator,original,installed:Object.fromEntries(plan.names.map(n=>[n,{dependency:'link:'+plan.targets[n].replaceAll('\\','/'),target:plan.targets[n]}]))};
-  write(plan.stateFile,JSON.stringify(state,null,2)+'\n');
-  return {status:'installed',version:state.version,backup,nativeAcceptance:'pending restart'};
- }catch(error){
-  write(plan.manifestFile,plan.raw);write(plan.patchFile,plan.patch);
-  for(const name of changedLinks.reverse()){const link=path.join(plan.profileDir,'node_modules',name);if(exists(link))fs.unlinkSync(link);if(beforeLinks[name])fs.symlinkSync(beforeLinks[name],link,process.platform==='win32'?'junction':'dir');}
-  if(oldState!==null)write(plan.stateFile,oldState);else if(fs.existsSync(plan.stateFile))fs.unlinkSync(plan.stateFile);
-  throw error;
- }
+  const existing=fs.existsSync(plan.versionDir),destination=existing?plan.versionDir:staging;
+  for(const entry of entries){const target=path.resolve(destination,entry.path);if(!within(target,destination))throw Error('Install path escaped');if(existing){if(!fs.existsSync(target)||hash(fs.readFileSync(target))!==entry.sha256)throw Error('Installed runtime was modified; preserve it and use a new version');}else{fs.mkdirSync(path.dirname(target),{recursive:true});fs.copyFileSync(path.join(plan.source,entry.path),target);if(hash(fs.readFileSync(target))!==entry.sha256)throw Error('Runtime changed during copy');}}
+  onPhase('runtime-staged');
+  const skin=path.join(destination,'packages/skin'),locator=path.join(skin,'runtime-config.json');if(fs.existsSync(locator)&&json(locator).dataDirectory!==plan.dataDir)throw Error('Installed data locator was modified');if(!fs.existsSync(locator))writeJson(locator,{schemaVersion:1,dataDirectory:plan.dataDir});
+  if(plan.withBoot){const boot=path.join(destination,'packages/boot'),modules=path.join(boot,'node_modules');if(!fs.existsSync(modules))fs.cpSync(path.join(boot,'vendor/packages'),modules,{recursive:true,dereference:true});const videos=path.join(boot,'assets/videos');fs.mkdirSync(path.dirname(videos),{recursive:true});if(fs.existsSync(videos)&&fs.readdirSync(videos).length===0)fs.rmdirSync(videos);if(!exists(videos))fs.symlinkSync(path.join(plan.dataDir,'boot-videos'),videos,process.platform==='win32'?'junction':'dir');}
+  if(!existing)fs.renameSync(staging,plan.versionDir);onPhase('runtime-activated');
+  fs.mkdirSync(path.join(plan.dataDir,'gallery'),{recursive:true});if(!fs.existsSync(path.join(plan.dataDir,'settings.json')))writeJson(path.join(plan.dataDir,'settings.json'),{schemaVersion:1,galleryDirectory:path.join(plan.dataDir,'gallery')});
+  for(const name of plan.names)switchPackageLink(plan,transaction,name,{onPhase});
+  write(plan.manifestFile,plan.nextRaw);write(plan.patchFile,plan.nextPatch);onPhase('profile-written');writeJson(plan.stateFile,state);onPhase('core-state-written');installManagement(plan);finishCore(plan,transaction);
+  return{status:'installed',version:state.version,backup,nativeAcceptance:'pending restart'};
+ }catch(error){try{recoverInterrupted(plan,{apply:true,allowLive:true});}catch(recovery){throw Error(error.message+'; recovery stopped to preserve changes: '+recovery.message);}throw error;}
 }
 export function uninstall(options={}){
  const loc=locations(options);if(!fs.existsSync(loc.stateFile))return {status:'not-installed'};

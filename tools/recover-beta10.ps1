@@ -4,7 +4,7 @@ try {
   $hertaRepairRoot=Split-Path $PSScriptRoot -Parent
   $hertaRepairManifest=Get-Content -LiteralPath (Join-Path $hertaRepairRoot 'recovery-manifest.json') -Raw -Encoding utf8 | ConvertFrom-Json
   if($hertaRepairManifest.schemaVersion -ne 1 -or !$hertaRepairManifest.version -or $hertaRepairManifest.targetReceipt -ne '0.4.0-beta.10'){throw 'Unsupported recovery manifest.'}
-  $hertaRepairAllowed=@('tools/trial.mjs','tools/profile.mjs','tools/host.mjs','tools/manage.mjs','tools/bootstrap.ps1')
+  $hertaRepairAllowed=@('tools/trial.mjs','tools/profile.mjs','tools/host.mjs','tools/host-inspect.mjs','tools/read-asar.mjs','tools/recovery-files.mjs','tools/transaction.mjs','tools/manage.mjs','tools/bootstrap.ps1','tools/installed-action.ps1')
   if((($hertaRepairManifest.files.path | Sort-Object) -join ',') -cne (($hertaRepairAllowed | Sort-Object) -join ',')){throw 'Incomplete recovery manifest.'}
   foreach($hertaRepairEntry in $hertaRepairManifest.files){
     if($hertaRepairEntry.path -notin $hertaRepairAllowed){throw 'Unexpected recovery file.'}

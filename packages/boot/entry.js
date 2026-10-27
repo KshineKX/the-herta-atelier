@@ -36,11 +36,11 @@
 // cordis.patch.yml moves the namespace and silently orphans the browser card,
 // whose key is the same string.
 
-import { readdir, stat, open } from 'node:fs/promises'
+import { readdir, stat } from 'node:fs/promises'
 import { createReadStream, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { basename, extname, join, resolve, sep } from 'node:path'
-import { optimizeInPlace } from './src/remux.js'
+import { optimizeInPlace, leadingBox as readFaststart } from './src/remux.js'
 import z from '@deepseek-ai/schemastery'
 
 /**
@@ -215,47 +215,6 @@ function contentType(file) {
     case '.webm': return 'video/webm'
     case '.mov': return 'video/quicktime'
     default: return 'video/mp4'
-  }
-}
-
-/**
- * Whether the movie box precedes the media data.
- *
- * A player cannot decode a frame until it has read `moov`, so a file whose
- * `moov` sits at the end must be fetched almost in full before anything appears
- * — the usual reason a clip shows nothing but black for a while. This is reported
- * to the browser card, which is where a user can act on it (tools/faststart.mjs
- * rewrites such a file losslessly).
- *
- * The header window is 64 KiB because the order of the first two boxes is NOT the
- * answer: all three clips in this pool carry a ~21 KiB `uuid` metadata box before
- * the media data, so a 1 KiB read saw `ftyp, uuid` and returned no verdict at all.
- * @param absolute - resolved clip path.
- * @returns true when `moov` comes first, false when `mdat` does, undefined when
- *   neither box is found within the header window.
- */
-async function readFaststart(absolute) {
-  let handle
-  try {
-    handle = await open(absolute, 'r')
-    const head = Buffer.alloc(65536)
-    const { bytesRead } = await handle.read(head, 0, head.length, 0)
-    let offset = 0
-    while (offset + 8 <= bytesRead) {
-      const type = head.toString('latin1', offset + 4, offset + 8)
-      if (type === 'moov') return true
-      if (type === 'mdat') return false
-      const size = head.readUInt32BE(offset)
-      if (size < 8) break
-      offset += size
-    }
-    return undefined
-  } catch {
-    // An unreadable header is not a reason to drop the clip from the pool; the
-    // card simply shows no optimisation verdict for it.
-    return undefined
-  } finally {
-    await handle?.close()
   }
 }
 
@@ -607,7 +566,10 @@ export function apply(ctx, config) {
   // `ctx.on` already returns a disposer the fiber tracks, so it is registered
   // directly rather than wrapped in an effect — matching the other subscribers
   // of this event (ui-theme, client-modules, client-connection).
+  let injectionWarned = false
   ctx.on('webserver/index-inject', (table) => {
+    try {
+    if (!Array.isArray(table)) throw new Error('Unsupported index injection table')
     const settings = currentSettings()
 
     // Switched off means switched off: no configuration row, no screen script, no
@@ -634,6 +596,12 @@ export function apply(ctx, config) {
       })}`,
     })
     table.push({ kind: 'script', placement: 'head', text: bootScreenSource() })
+    } catch (error) {
+      if (!injectionWarned) {
+        injectionWarned = true
+        ctx.logger?.warn?.('boot-animation: index injection skipped; native boot remains available', error)
+      }
+    }
   })
 }
 

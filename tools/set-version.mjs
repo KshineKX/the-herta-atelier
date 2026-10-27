@@ -1,0 +1,6 @@
+import fs from 'node:fs';import {fileURLToPath} from 'node:url';import path from 'node:path';
+const version=process.argv[2];if(!/^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$/.test(version||''))throw Error('Pass a semver release version');
+const root=fileURLToPath(new URL('../',import.meta.url)),writes=[];
+for(const name of ['package.json','packages/skin/package.json','packages/skin/skin.json','packages/boot/package.json','package-lock.json']){const file=path.join(root,name),value=JSON.parse(fs.readFileSync(file,'utf8'));value.version=version;if(name==='package-lock.json')value.packages[''].version=version;writes.push([file,JSON.stringify(value,null,2)+'\n']);}
+for(const name of ['README.md','docs/RELEASE-REVIEW.md']){const file=path.join(root,name),text=fs.readFileSync(file,'utf8'),pattern=/<!-- herta-source-version:start -->[\s\S]*?<!-- herta-source-version:end -->/g;const matches=[...text.matchAll(pattern)];if(matches.length!==1)throw Error('Expected one source version block: '+name);writes.push([file,text.replace(pattern,'<!-- herta-source-version:start -->\n源码版本：**'+version+'**\n<!-- herta-source-version:end -->')]);}
+for(const[file,text]of writes)fs.writeFileSync(file,text);console.log(version);

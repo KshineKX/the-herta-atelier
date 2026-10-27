@@ -1,3 +1,5 @@
+import {beginTrial,finishTrial,writeJson,atomicWrite as journalWrite,hashFile as journalHash,recoverInterrupted} from './transaction.mjs';
+import {RECOVERY_FILES} from './recovery-files.mjs';
 import fs from'node:fs';import path from'node:path';import crypto from'node:crypto';import{fileURLToPath}from'node:url';
 import{makePlan,install,locations,patchMatchesExpected,reconstructBeta10Patch}from'./profile.mjs';
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex'),exists=p=>fs.existsSync(p),read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
@@ -30,15 +32,23 @@ export function applyTrial(plan,{onPhase=()=>{}}={}){
  if(plan.core.previousState?.version===plan.core.release.version)throw Error('Candidate already installed; keep the existing rollback baseline');
  const p=plan.core,backup=path.join(p.dataDir,'trial-backups','trial-'+Date.now()+'-'+crypto.randomUUID()),motion=path.join(p.dataDir,'motion'),staged=path.join(backup,'motion-staged'),beforeMotion=tree(motion),receipt={schemaVersion:1,version:p.release.version,profile:p.profile,profileDir:p.profileDir,dataDir:p.dataDir,beforeFiles:{},beforeLinks:links(p),beforeMotion,phase:'prepared'};
  fs.mkdirSync(backup,{recursive:true});for(const[key,file]of Object.entries(files(p))){receipt.beforeFiles[key]=fileHash(file);if(exists(file))fs.copyFileSync(file,path.join(backup,key))}
- fs.mkdirSync(path.join(backup,'tools'));for(const name of ['trial.mjs','profile.mjs','host.mjs'])fs.copyFileSync(fileURLToPath(new URL(name,import.meta.url)),path.join(backup,'tools',name));
+ fs.mkdirSync(path.join(backup,'tools'));for(const name of RECOVERY_FILES)fs.copyFileSync(fileURLToPath(new URL(name,import.meta.url)),path.join(backup,'tools',name));
  fs.writeFileSync(path.join(backup,'RollbackThisTrial.mjs'),"import fs from'node:fs';import path from'node:path';import{fileURLToPath}from'node:url';import{rollbackTrial}from'./tools/trial.mjs';const backup=path.dirname(fileURLToPath(import.meta.url)),r=JSON.parse(fs.readFileSync(path.join(backup,'receipt.json'),'utf8'));console.log(JSON.stringify(rollbackTrial({dshHome:path.dirname(path.dirname(r.profileDir)),profile:r.profile,dataDir:r.dataDir,backup,apply:true})));\n");
  fs.writeFileSync(path.join(backup,'Rollback.cmd'),'@echo off\r\nsetlocal DisableDelayedExpansion\r\n"'+process.execPath.replaceAll('%','%%')+'" "%~dp0RollbackThisTrial.mjs"\r\npause\r\n');
  if(exists(motion))fs.cpSync(motion,staged,{recursive:true});else fs.mkdirSync(staged);
  for(const[id,e]of Object.entries(plan.catalog.clips)){const target=path.join(staged,e.file);fs.mkdirSync(path.dirname(target),{recursive:true});fs.copyFileSync(path.join(plan.pack,e.file),target);if(fileHash(target)!==e.sha256)throw Error('Motion changed during copy: '+id)}
- fs.writeFileSync(path.join(staged,'motion-manifest.json'),JSON.stringify(plan.catalog,null,2)+'\n');const receiptFile=path.join(backup,'receipt.json');fs.writeFileSync(receiptFile,JSON.stringify(receipt,null,2)+'\n');let oldMoved=false,newMoved=false;
- try{install(p,{onPhase});if(exists(motion)){fs.renameSync(motion,path.join(backup,'motion-before'));oldMoved=true}fs.renameSync(staged,motion);newMoved=true;onPhase('motion-activated');receipt.afterFiles=Object.fromEntries(Object.entries(files(p)).map(([k,v])=>[k,fileHash(v)]));fs.copyFileSync(p.patchFile,path.join(backup,'after-profile-patch.yml'));receipt.afterLinks=links(p);receipt.afterMotion=tree(motion);receipt.phase='installed';fs.writeFileSync(receiptFile,JSON.stringify(receipt,null,2)+'\n');return{status:'trial-installed',version:p.release.version,backup,nativeAcceptance:'pending restart'};
- }catch(error){if(newMoved)fs.renameSync(motion,path.join(backup,'motion-failed'));if(oldMoved)fs.renameSync(path.join(backup,'motion-before'),motion);restoreProfile(p,backup,receipt);receipt.phase='failed-restored';receipt.error=error.message;fs.writeFileSync(receiptFile,JSON.stringify(receipt,null,2)+'\n');throw error}
+ fs.writeFileSync(path.join(staged,'motion-manifest.json'),JSON.stringify(plan.catalog,null,2)+'\n');
+ const latest=path.join(p.dataDir,'latest-trial-'+p.profile+'.json'),nextPointer=JSON.stringify({backup})+'\n';
+ receipt.beforeLatest=journalHash(latest);receipt.plannedLatest=sha(Buffer.from(nextPointer));if(receipt.beforeLatest!==null)fs.copyFileSync(latest,path.join(backup,'latest-trial-before.json'));
+ receipt.preparedMotion=tree(staged);receipt.afterLinks=p.targets;const receiptFile=path.join(backup,'receipt.json');writeJson(receiptFile,receipt);beginTrial(p,backup);
+ try{
+  install(p,{onPhase(phase){if(phase==='core-state-written'){receipt.afterFiles=Object.fromEntries(Object.entries(files(p)).map(([key,file])=>[key,fileHash(file)]));fs.copyFileSync(p.patchFile,path.join(backup,'planned-profile-patch.yml'));receipt.phase='core-installed';writeJson(receiptFile,receipt);}onPhase(phase);}});
+  if(exists(motion))fs.renameSync(motion,path.join(backup,'motion-before'));onPhase('old-motion-moved');
+  fs.renameSync(staged,motion);onPhase('motion-activated');receipt.afterFiles=Object.fromEntries(Object.entries(files(p)).map(([key,file])=>[key,fileHash(file)]));fs.copyFileSync(p.patchFile,path.join(backup,'after-profile-patch.yml'));receipt.afterLinks=links(p);receipt.afterMotion=tree(motion);receipt.phase='installed';writeJson(receiptFile,receipt);journalWrite(latest,nextPointer);onPhase('trial-committed');finishTrial(p);
+  return{status:'trial-installed',version:p.release.version,backup,nativeAcceptance:'pending restart'};
+ }catch(error){try{recoverInterrupted(p,{apply:true,allowLive:true});}catch(recovery){throw Error(error.message+'; recovery stopped to preserve changes: '+recovery.message);}throw error;}
 }
+
 export function rollbackTrial(options={}){
  const loc=locations(options),backup=path.resolve(options.backup||'');if(!inside(backup,path.join(loc.dataDir,'trial-backups'))||!path.basename(backup).startsWith('trial-'))throw Error('Expected a managed trial backup');const receipt=read(path.join(backup,'receipt.json'));
  if(receipt.schemaVersion!==1||receipt.profileDir!==loc.profileDir||receipt.dataDir!==loc.dataDir||receipt.profile!==loc.profile)throw Error('Trial receipt does not match this profile');if(receipt.phase==='rolled-back'||receipt.phase==='failed-restored')return{status:'already-restored',readOnly:true};if(receipt.phase!=='installed')throw Error('Trial has not finished installing');

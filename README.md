@@ -2,7 +2,13 @@
 
 [代码许可：PolyForm Noncommercial 1.0.0](docs/LICENSE-SUMMARY.md) · 免费非商业使用、允许许可范围内的修改，分发保留署名
 
-**Kshine 的非官方 DSH 主题作品 · 0.4.0-beta.11 · Windows**
+**Kshine 的非官方 DSH 主题作品 · Windows**
+
+<!-- herta-source-version:start -->
+源码版本：**0.4.0-beta.12**
+<!-- herta-source-version:end -->
+
+本版为工程整改 Beta，正式附件及每包验证回执见[beta.12发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.12)。本轮暂缓真实DSH安装、重启与实机验收，现用beta.11保持不动。检查与待验项见[交付状态](docs/RELEASE-REVIEW.md)，版本与构建职责见[单一源码入口](docs/SOURCE-OF-TRUTH.md)。
 
 紫黑与晨光双主题，三组内置场景画像，以及银纹、紫花、宝石与钥匙的层叠框饰。观赏模式保留人物与场景；专注模式在宿主原有正文列背后增加柔边衬底，切换保留消息与输入框布局。面板、代码与输入框使用统一的紫调玻璃材质。
 
@@ -12,7 +18,7 @@
 
 ## 预览
 
-浅色与深色界面（虚构示例内容的演示页截图，不含真实聊天）：
+以下为已发布 beta.11 的浅色与深色演示页截图，使用虚构内容，不含真实聊天；不冒充新候选的原生实机截图：
 
 ![beta.11 浅色界面演示](docs/screenshots/overview-beta11-light.jpg)
 
@@ -26,7 +32,7 @@
 
 ## 第一次使用
 
-1. 打开[beta.11发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.11)，下载 **The-Herta-Atelier-0.4.0-beta.11-theme.zip** 和对应 `.sha256`，核对后解压。仓库目前为私有，需要已获访问权限的GitHub账号。
+1. 打开[beta.12发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.12)，下载 **The-Herta-Atelier-0.4.0-beta.12-theme.zip** 和对应 `.sha256`，核对后解压。仓库目前为私有，需要已获访问权限的GitHub账号。
 2. 先运行一次DSH，保存工作并完全退出，再双击 **Install.cmd**。安装器校验并备份配置，联合安装代码和13段视频。
 3. 重新打开DSH，展开右上工具条，用四角星打开设置；选择静态／动态、画像场景、观赏／专注和深浅外观。
 4. 镜子按钮固定保留在工具条，点击才打开图库。**OpenGallery.cmd** 打开自己的图库目录，增删图片后重开藏镜刷新。
@@ -56,17 +62,21 @@ Code → Download ZIP 是开发源码；安装用户优先使用预构建的 `-t
 
 ### beta.10 因标记注释消失而无法回退
 
-beta.11 已修复宿主删除两行受管标记注释导致的误拒绝。发行页另有约22KB的 **beta10-rollback-repair.zip**：无需先安装beta.11，可从原beta.10备份直接恢复其记录的升级前版本，例如beta.8。先核对SHA并执行只读预检，DSH退出后再应用。其他用户改动、配置或媒体变化仍会拒绝覆盖，原before备份保留，原回执另存。
+beta.11 已修复宿主删除两行受管标记注释导致的误拒绝，本版完整包继续保留RecoverBeta10.cmd。[beta.11发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.11)另有约22KB的 **beta10-rollback-repair.zip**：无需先安装beta.11，可从原beta.10备份直接恢复其记录的升级前版本，例如beta.8。先核对SHA并执行只读预检，DSH退出后再应用。其他用户改动、配置或媒体变化仍会拒绝覆盖，原before备份保留，原回执另存。
 
 完整步骤见[安装与回滚](docs/INSTALL.md)，环境边界见[兼容范围](docs/COMPATIBILITY.md)，执行记录见[验收记录](docs/ACCEPTANCE.md)。
 
 ## 当前状态与验证范围
 
+beta.12发布准备已在正常Windows上下文执行完整74项测试，全部通过、无跳过，包含临时profile/junction、安装失败和中断恢复、Git快照及Edge语义夹具。正式theme/core包还必须通过干净提交归档、构建、全套测试、严格清单与ZIP解压复验；每份包的实际结果见发行附件verification.json和CI。
+
+beta.12真实DSH安装与实机验收明确暂缓；浏览器夹具与ASAR静态锚点不能替代原生冷启动、每页布局、DPI或长期性能。以下beta.11记录仅为历史证据，不继承为beta.12已实机通过。
+
 beta.11 已发布；来源会话已从GitHub下载并完成隔离安装／回退验收，在DSH0.2.1-rc.3实际安装并重启。真实后端13段视频、26个首尾Range请求和3场景背景检查通过，宿主移除标记注释后的回退只读预检通过。新版界面与触发体验仍保留用户进一步确认范围，不宣称跨机或长期稳定性已完成。
 
 发布阶段最终包30项测试、7组隔离浏览器检查通过；GitHub回下载核对一致，另复验8项关键恢复测试。浏览器长等待用timer harness提前回调，部分动作结尾seek；这些不是自然时长全程或自动原生帧测量。
 
-当前安装包与标签固定在beta.11发布提交。首页、预览和制作说明可在main持续更新，不覆盖已发布的同名安装包；安装包内的说明保留发布时快照。
+各版安装包与标签固定在其发布提交。首页、预览和制作说明可在main持续更新，不覆盖已发布的同名安装包；安装包内的说明保留发布时快照。
 
 ## 可选开屏
 
@@ -77,13 +87,18 @@ beta.11 已发布；来源会话已从GitHub下载并完成隔离安装／回退
 ## 开发与维护
 
 ```text
-node tools/build.mjs
-node --test tests/*.test.mjs
+npm ci --ignore-scripts --no-audit --no-fund
+npm test
 node tools/verify.mjs
 node tools/preview.mjs
+# 修改完成后先提交，发布入口只接受干净的 Git 提交
 node tools/release.mjs
 # 显式基础版：node tools/release.mjs --core
 ```
+
+开发者安装的 Playwright 是测试依赖；Windows 浏览器回归默认使用本机 Microsoft Edge。它不进入安装包的运行依赖，也不调用生成模型。`npm test` 会先构建，避免用过期清单测试新源码。
+
+发布入口从干净提交执行 `git archive`，在独立目录构建、检查媒体清单及隐私、运行测试，再打包、解压并复验；任一关卡失败都不产出成功发行件。同名 ZIP 不覆盖。
 
 源码先构建本地清单，再使用安装器。`tools/preview.mjs` 是开发预览入口，终端会报告本机地址；普通安装和使用不依赖它。历史候选审阅文件保留作过程记录，不代表当前版本仍未安装或未发布。
 
@@ -100,6 +115,8 @@ node tools/release.mjs
 作者可授权的代码采用 **PolyForm Noncommercial 1.0.0**，允许许可范围内的非商业使用、修改与衍生，分发保留许可和Required Notice；独立原创SVG框饰采用 **CC BY-NC-SA 4.0**。这是源码可用、非商业许可的个人作品，不称为标准开源软件。
 
 可选开屏仍为上游MIT许可，字体仍为SIL OFL；项目的非商业要求不改变第三方MIT/OFL原有权利。代码与美术许可只覆盖有权授权的贡献，不转移角色或商标权利，也不表示官方合作或获得单独角色授权。
+
+独立美术的署名、许可链接与字体修改状态见[素材署名表](docs/ASSET-ATTRIBUTION.md)。
 
 许可与来源详见[LICENSE](LICENSE)、[许可摘要](docs/LICENSE-SUMMARY.md)、[NOTICE](NOTICE.md)、[素材台账](docs/ASSET-RIGHTS.md)及[源码与AI说明](docs/SOURCE-AND-AI.md)。
 

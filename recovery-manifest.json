@@ -1,27 +1,47 @@
 {
   "schemaVersion": 1,
-  "version": "0.4.0-beta.11",
+  "version": "0.4.0-beta.12",
   "targetReceipt": "0.4.0-beta.10",
   "files": [
     {
       "path": "tools/trial.mjs",
-      "sha256": "f56ef9916867bee486fc15d91645f25e0a5ad8e76815d8dd006f1b5e542d61f3"
+      "sha256": "3c8b6504f2bf170b6e6a3714cbd63eacc8aaf4dbda059137cba4b68db9b2c0da"
     },
     {
       "path": "tools/profile.mjs",
-      "sha256": "a6b425c124cfe8565f41114eb04b0c69a7d31ba77099a41bba0ef0945ecec3b4"
+      "sha256": "5db45466da79ce38453a1a4e904e31857c3b85154d1d11db6816dd72cfa6d173"
     },
     {
       "path": "tools/host.mjs",
-      "sha256": "39120221dd11bfbb34a9d9dbb9b29d7ae094a81836ab6b05e2011c283ef8c555"
+      "sha256": "9f82737005a78c0217cb0d98495ea078ea8617b784b75d2942a9a8b308667b88"
+    },
+    {
+      "path": "tools/host-inspect.mjs",
+      "sha256": "ac6b145e7ea269810e260bcf19fa3694faa60c33370f7e6371c6f5eb56b5a023"
+    },
+    {
+      "path": "tools/read-asar.mjs",
+      "sha256": "2e2feb6405ad9f9adf12a05b47d3e7203672fa61b40f760d872edf833f9645be"
+    },
+    {
+      "path": "tools/recovery-files.mjs",
+      "sha256": "0c91c6cc7361b51853d449e0e6470c4723c88dd150a12b37b167609c461eaec2"
+    },
+    {
+      "path": "tools/transaction.mjs",
+      "sha256": "225f5a2060c03f8a25df50b949051ee7981b7e6235c550e1b463d824c22c76e6"
     },
     {
       "path": "tools/manage.mjs",
-      "sha256": "8bc1f78be6d803b4c0d78ec366d4650ed083da244f3853f2ce9f6eecbdae8c92"
+      "sha256": "4e3b1e2bd4130cba59ce4117e53aedc5189071fd0fb482b8daef23de5016ddfb"
     },
     {
       "path": "tools/bootstrap.ps1",
-      "sha256": "02672a2a09311696f19114ad447932e36f9a36c4cc38d01f1f54217c6f601fd2"
+      "sha256": "1254d00679272a621779bf8609957d43163bf92a279f7e2af5cf1e09a3689863"
+    },
+    {
+      "path": "tools/installed-action.ps1",
+      "sha256": "6928566362db5546dca514c8d74caa94d4d24eb64b670a9dad83dac77a4b620b"
     }
   ]
 }
