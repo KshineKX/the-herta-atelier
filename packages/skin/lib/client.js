@@ -484,7 +484,7 @@ body[data-herta-atelier] .herta-art{filter:saturate(.96)}
 body[data-herta-tone=light] .herta-art-chat-light{filter:saturate(.94)}
 `;
 
-const PROJECT_VERSION="0.4.0-beta.12";
+const PROJECT_VERSION="0.4.0-beta.13";
 
 const HOST_SELECTORS=Object.freeze({
  surfaces:'[data-composer-card],[data-slot="conversation.composer.bar"],[data-slot="composer"],[data-slot="chat-input"],[data-conversation-scroll] pre,[data-slot="settings"]',

@@ -7,8 +7,8 @@ import {spawnSync} from 'node:child_process';
 import {extractArchive} from '../tools/release-source.mjs';
 
 function fixture(t,entries){
- const root=fs.mkdtempSync(path.join(os.tmpdir(),'herta-zip-'));
- t.after(()=>{const target=path.resolve(root);assert.ok(target.startsWith(path.resolve(os.tmpdir())+path.sep)&&path.basename(target).startsWith('herta-zip-'));fs.rmSync(target,{recursive:true,force:true})});
+ const root=fs.mkdtempSync(path.join(fs.realpathSync.native(os.tmpdir()),'herta-zip-'));
+ t.after(()=>{const target=path.resolve(root);assert.ok(target.startsWith(path.resolve(fs.realpathSync.native(os.tmpdir()))+path.sep)&&path.basename(target).startsWith('herta-zip-'));fs.rmSync(target,{recursive:true,force:true})});
  const zip=path.join(root,'fixture.zip'),destination=path.join(root,'解压 with spaces');
  const script="Add-Type -AssemblyName System.IO.Compression.FileSystem; $hertaSpec=$env:HERTA_ZIP_TEST_SPEC | ConvertFrom-Json; $hertaZip=[IO.Compression.ZipFile]::Open($hertaSpec.zip,'Create'); try { foreach($hertaValue in $hertaSpec.entries){ $hertaEntry=$hertaZip.CreateEntry($hertaValue.name); if($null -ne $hertaValue.attributes){$hertaEntry.ExternalAttributes=$hertaValue.attributes}; $hertaWriter=[IO.StreamWriter]::new($hertaEntry.Open()); try{$hertaWriter.Write($hertaValue.text)}finally{$hertaWriter.Dispose()} } }finally{$hertaZip.Dispose()}";
  const result=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',script],{env:{...process.env,HERTA_ZIP_TEST_SPEC:JSON.stringify({zip,entries})},encoding:'utf8',windowsHide:true});

@@ -6,7 +6,7 @@ import path from 'node:path';
 import {remux,leadingBox} from '../packages/boot/src/remux.js';
 import {mount,settle,state} from '../packages/boot/verify/screen-harness.mjs';
 
-function fixture(t){const root=fs.mkdtempSync(path.join(os.tmpdir(),'herta-boot-regression-'));t.after(()=>{const target=path.resolve(root);assert.ok(target.startsWith(path.resolve(os.tmpdir())+path.sep)&&path.basename(target).startsWith('herta-boot-regression-'));fs.rmSync(target,{recursive:true,force:true})});return root}
+function fixture(t){const root=fs.mkdtempSync(path.join(fs.realpathSync.native(os.tmpdir()),'herta-boot-regression-'));t.after(()=>{const target=path.resolve(root);assert.ok(target.startsWith(path.resolve(fs.realpathSync.native(os.tmpdir()))+path.sep)&&path.basename(target).startsWith('herta-boot-regression-'));fs.rmSync(target,{recursive:true,force:true})});return root}
 function box(type,payload=Buffer.alloc(0)){const header=Buffer.alloc(8);header.writeUInt32BE(8+payload.length);header.write(type,4,'latin1');return Buffer.concat([header,payload])}
 function movie(type,{fast=false,large=false,extended=false}={}){
  const ftyp=box('ftyp',Buffer.from('isom0000isom')),padding=large?Buffer.alloc(100*1024):Buffer.alloc(0);

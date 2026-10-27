@@ -81,3 +81,7 @@ beta.11 UI 来源会话另有7组隔离 Edge 检查通过、pageerror为空：�
 发布副本在正常Windows权限下补跑完整npm test：74项通过，0失败、0跳过，包含真实临时junction与恢复再次中断、Git source夹具及独立Edge七组交互。首次全套发现快速取消View Transition的ready拒绝未消费、Git夹具受全局换行设置影响；在发布副本修复后全套通过，未删除断言或降低guard。PowerShell源码统一LF以固定恢复工具哈希，CMD保留CRLF。
 
 正式包仍由干净提交门禁分别构建theme/core，执行每包测试与严格解压核对，详细结果随verification.json、source-provenance.json及CI记录提供。core的画像专用测试为明确不适用，不能把它替代完整theme。此次不安装或重启真实DSH，不进行真实profile/实机验收，不继承beta.11为新版已通过。
+
+## beta.13 CI运行器路径补验
+
+beta.12在本机正常Windows通过，但GitHub Windows运行器暴露临时目录别名/大小写比较问题和junction测试子进程异常；因此保留beta.12原标签与草稿，不作为成功发行。beta.13将临时夹具根目录和清理边界统一为真实规范路径，并按真实目录身份检查发布根，增加大小写与子目录负例。CI结果必须以本次提交对应运行和发行回执为准，不用本机结果替代。所有测试仍执行，真实DSH安装/验收仍暂缓。

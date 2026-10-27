@@ -2,7 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';import fs f
 import {makePlan,install,uninstall} from '../tools/profile.mjs';
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 function fixture(t,{newline='\r\n',ending=true}={}){
- const dir=fs.mkdtempSync(path.join(os.tmpdir(),'herta-test-'));t.after(()=>{const target=path.resolve(dir),base=path.resolve(os.tmpdir());if(!target.startsWith(base+path.sep)||!path.basename(target).startsWith('herta-test-'))throw Error('Cleanup boundary');fs.rmSync(target,{recursive:true,force:true});});
+ const dir=fs.mkdtempSync(path.join(fs.realpathSync.native(os.tmpdir()),'herta-test-'));t.after(()=>{const target=path.resolve(dir),base=path.resolve(fs.realpathSync.native(os.tmpdir()));if(!target.startsWith(base+path.sep)||!path.basename(target).startsWith('herta-test-'))throw Error('Cleanup boundary');fs.rmSync(target,{recursive:true,force:true});});
  const home=path.join(dir,'测试 DSH home'),profile=path.join(home,'profiles/desktop'),source=path.join(dir,'发布 包'),dataDir=path.join(dir,'用户数据');fs.mkdirSync(profile,{recursive:true});fs.mkdirSync(path.join(source,'packages/skin/lib'),{recursive:true});fs.mkdirSync(path.join(source,'packages/boot/lib'),{recursive:true});
  const original={name:'test-profile',dependencies:{'other-plugin':'1.0'},dsh:{profile:{bundles:['other-plugin']}},note:'中文原样保留'};
  fs.writeFileSync(path.join(profile,'package.json'),JSON.stringify(original,null,2).replaceAll('\n',newline)+newline);

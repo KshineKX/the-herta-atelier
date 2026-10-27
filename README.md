@@ -5,10 +5,10 @@
 **Kshine 的非官方 DSH 主题作品 · Windows**
 
 <!-- herta-source-version:start -->
-源码版本：**0.4.0-beta.12**
+源码版本：**0.4.0-beta.13**
 <!-- herta-source-version:end -->
 
-本版为工程整改 Beta，正式附件及每包验证回执见[beta.12发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.12)。本轮暂缓真实DSH安装、重启与实机验收，现用beta.11保持不动。检查与待验项见[交付状态](docs/RELEASE-REVIEW.md)，版本与构建职责见[单一源码入口](docs/SOURCE-OF-TRUTH.md)。
+本版为工程整改 Beta，正式附件及每包验证回执见[beta.13发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.13)。本轮暂缓真实DSH安装、重启与实机验收，现用beta.11保持不动。检查与待验项见[交付状态](docs/RELEASE-REVIEW.md)，版本与构建职责见[单一源码入口](docs/SOURCE-OF-TRUTH.md)。
 
 紫黑与晨光双主题，三组内置场景画像，以及银纹、紫花、宝石与钥匙的层叠框饰。观赏模式保留人物与场景；专注模式在宿主原有正文列背后增加柔边衬底，切换保留消息与输入框布局。面板、代码与输入框使用统一的紫调玻璃材质。
 
@@ -32,7 +32,7 @@
 
 ## 第一次使用
 
-1. 打开[beta.12发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.12)，下载 **The-Herta-Atelier-0.4.0-beta.12-theme.zip** 和对应 `.sha256`，核对后解压。仓库目前为私有，需要已获访问权限的GitHub账号。
+1. 打开[beta.13发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.13)，下载 **The-Herta-Atelier-0.4.0-beta.13-theme.zip** 和对应 `.sha256`，核对后解压。仓库目前为私有，需要已获访问权限的GitHub账号。
 2. 先运行一次DSH，保存工作并完全退出，再双击 **Install.cmd**。安装器校验并备份配置，联合安装代码和13段视频。
 3. 重新打开DSH，展开右上工具条，用四角星打开设置；选择静态／动态、画像场景、观赏／专注和深浅外观。
 4. 镜子按钮固定保留在工具条，点击才打开图库。**OpenGallery.cmd** 打开自己的图库目录，增删图片后重开藏镜刷新。
