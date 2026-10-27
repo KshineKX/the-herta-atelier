@@ -1,5 +1,6 @@
 import {beginTrial,finishTrial,writeJson,atomicWrite as journalWrite,hashFile as journalHash,recoverInterrupted} from './transaction.mjs';
 import {RECOVERY_FILES} from './recovery-files.mjs';
+import {copyTree} from './copy-tree.mjs';
 import fs from'node:fs';import path from'node:path';import crypto from'node:crypto';import{fileURLToPath}from'node:url';
 import{makePlan,install,locations,patchMatchesExpected,reconstructBeta10Patch}from'./profile.mjs';
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex'),exists=p=>fs.existsSync(p),read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
@@ -35,7 +36,7 @@ export function applyTrial(plan,{onPhase=()=>{}}={}){
  fs.mkdirSync(path.join(backup,'tools'));for(const name of RECOVERY_FILES)fs.copyFileSync(fileURLToPath(new URL(name,import.meta.url)),path.join(backup,'tools',name));
  fs.writeFileSync(path.join(backup,'RollbackThisTrial.mjs'),"import fs from'node:fs';import path from'node:path';import{fileURLToPath}from'node:url';import{rollbackTrial}from'./tools/trial.mjs';const backup=path.dirname(fileURLToPath(import.meta.url)),r=JSON.parse(fs.readFileSync(path.join(backup,'receipt.json'),'utf8'));console.log(JSON.stringify(rollbackTrial({dshHome:path.dirname(path.dirname(r.profileDir)),profile:r.profile,dataDir:r.dataDir,backup,apply:true})));\n");
  fs.writeFileSync(path.join(backup,'Rollback.cmd'),'@echo off\r\nsetlocal DisableDelayedExpansion\r\n"'+process.execPath.replaceAll('%','%%')+'" "%~dp0RollbackThisTrial.mjs"\r\npause\r\n');
- if(exists(motion))fs.cpSync(motion,staged,{recursive:true});else fs.mkdirSync(staged);
+ if(exists(motion))copyTree(motion,staged);else fs.mkdirSync(staged);
  for(const[id,e]of Object.entries(plan.catalog.clips)){const target=path.join(staged,e.file);fs.mkdirSync(path.dirname(target),{recursive:true});fs.copyFileSync(path.join(plan.pack,e.file),target);if(fileHash(target)!==e.sha256)throw Error('Motion changed during copy: '+id)}
  fs.writeFileSync(path.join(staged,'motion-manifest.json'),JSON.stringify(plan.catalog,null,2)+'\n');
  const latest=path.join(p.dataDir,'latest-trial-'+p.profile+'.json'),nextPointer=JSON.stringify({backup})+'\n';

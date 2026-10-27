@@ -4,12 +4,16 @@
   "targetReceipt": "0.4.0-beta.10",
   "files": [
     {
+      "path": "tools/copy-tree.mjs",
+      "sha256": "b217f8decb08076cacbe2aff98261da486353ded1b887d7cf9b3dda7515f4125"
+    },
+    {
       "path": "tools/trial.mjs",
-      "sha256": "3c8b6504f2bf170b6e6a3714cbd63eacc8aaf4dbda059137cba4b68db9b2c0da"
+      "sha256": "0215f58d526cfe0e782e8c744fe3d6872c25955a4ce855b39fcb9d208fa7b571"
     },
     {
       "path": "tools/profile.mjs",
-      "sha256": "5db45466da79ce38453a1a4e904e31857c3b85154d1d11db6816dd72cfa6d173"
+      "sha256": "947265e57c481ca82a39387b3e437f9534ee574c039e5ee8efb9551aa47a4cab"
     },
     {
       "path": "tools/host.mjs",
@@ -25,7 +29,7 @@
     },
     {
       "path": "tools/recovery-files.mjs",
-      "sha256": "0c91c6cc7361b51853d449e0e6470c4723c88dd150a12b37b167609c461eaec2"
+      "sha256": "ccbac6e7cf6355f08c39c1e9d49023a5ac8da30ef122258aa77efeefb33036c5"
     },
     {
       "path": "tools/transaction.mjs",

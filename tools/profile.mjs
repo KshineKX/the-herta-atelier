@@ -1,3 +1,4 @@
+import {copyTree} from './copy-tree.mjs';
 import {atomicWrite,writeJson,beginCore,finishCore,switchPackageLink,recoverInterrupted,assertNoInterrupted,withoutManagedMarkers,patchMatchesExpected} from './transaction.mjs';
 import {RECOVERY_FILES} from './recovery-files.mjs';
 export {withoutManagedMarkers,patchMatchesExpected} from './transaction.mjs';
@@ -126,7 +127,7 @@ export function install(plan,{onPhase=()=>{}}={}){
   for(const entry of entries){const target=path.resolve(destination,entry.path);if(!within(target,destination))throw Error('Install path escaped');if(existing){if(!fs.existsSync(target)||hash(fs.readFileSync(target))!==entry.sha256)throw Error('Installed runtime was modified; preserve it and use a new version');}else{fs.mkdirSync(path.dirname(target),{recursive:true});fs.copyFileSync(path.join(plan.source,entry.path),target);if(hash(fs.readFileSync(target))!==entry.sha256)throw Error('Runtime changed during copy');}}
   onPhase('runtime-staged');
   const skin=path.join(destination,'packages/skin'),locator=path.join(skin,'runtime-config.json');if(fs.existsSync(locator)&&json(locator).dataDirectory!==plan.dataDir)throw Error('Installed data locator was modified');if(!fs.existsSync(locator))writeJson(locator,{schemaVersion:1,dataDirectory:plan.dataDir});
-  if(plan.withBoot){const boot=path.join(destination,'packages/boot'),modules=path.join(boot,'node_modules');if(!fs.existsSync(modules))fs.cpSync(path.join(boot,'vendor/packages'),modules,{recursive:true,dereference:true});const videos=path.join(boot,'assets/videos');fs.mkdirSync(path.dirname(videos),{recursive:true});if(fs.existsSync(videos)&&fs.readdirSync(videos).length===0)fs.rmdirSync(videos);if(!exists(videos))fs.symlinkSync(path.join(plan.dataDir,'boot-videos'),videos,process.platform==='win32'?'junction':'dir');}
+  if(plan.withBoot){const boot=path.join(destination,'packages/boot'),modules=path.join(boot,'node_modules');if(!fs.existsSync(modules))copyTree(path.join(boot,'vendor/packages'),modules);const videos=path.join(boot,'assets/videos');fs.mkdirSync(path.dirname(videos),{recursive:true});if(fs.existsSync(videos)&&fs.readdirSync(videos).length===0)fs.rmdirSync(videos);if(!exists(videos))fs.symlinkSync(path.join(plan.dataDir,'boot-videos'),videos,process.platform==='win32'?'junction':'dir');}
   if(!existing)fs.renameSync(staging,plan.versionDir);onPhase('runtime-activated');
   fs.mkdirSync(path.join(plan.dataDir,'gallery'),{recursive:true});if(!fs.existsSync(path.join(plan.dataDir,'settings.json')))writeJson(path.join(plan.dataDir,'settings.json'),{schemaVersion:1,galleryDirectory:path.join(plan.dataDir,'gallery')});
   for(const name of plan.names)switchPackageLink(plan,transaction,name,{onPhase});

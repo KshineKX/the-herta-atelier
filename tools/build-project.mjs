@@ -1,8 +1,9 @@
 import {RECOVERY_FILES} from './recovery-files.mjs';
+import {copyTree} from './copy-tree.mjs';
 import fs from 'node:fs';import path from 'node:path';import {spawnSync} from 'node:child_process';import {fileURLToPath} from 'node:url';
 import {inventory,verifyPrivacy,verifyMedia,digest} from './release-policy.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
-const vendor=path.join(root,'packages/boot/vendor/packages'),modules=path.join(root,'packages/boot/node_modules');if(fs.existsSync(vendor)&&!fs.existsSync(modules))fs.cpSync(vendor,modules,{recursive:true,dereference:true});
+const vendor=path.join(root,'packages/boot/vendor/packages'),modules=path.join(root,'packages/boot/node_modules');if(fs.existsSync(vendor)&&!fs.existsSync(modules))copyTree(vendor,modules);
 for(const[cwd,file]of [['packages/skin','build.mjs'],['packages/boot','build-client.mjs']]){const result=spawnSync(process.execPath,[file],{cwd:path.join(root,cwd),stdio:'inherit',windowsHide:true});if(result.status!==0)process.exit(result.status||1);}
 const version=JSON.parse(fs.readFileSync(path.join(root,'package.json'))).version;
 const recoveryFiles=RECOVERY_FILES.map(file=>'tools/'+file).map(name=>({path:name,sha256:digest(fs.readFileSync(path.join(root,name)))}));
