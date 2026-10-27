@@ -26,3 +26,13 @@ Required Notice: Copyright (c) 2026 Kshine. The Herta Atelier. https://github.co
 项目是源码可用的非商业许可项目，不宣称符合 OSI 开源定义。限制只适用于作者有权许可的贡献；第三方 MIT/OFL 部分保留各自原有权利，不能将其改称禁止商用。
 
 本轮完整动态包另包含 Kshine 为本项目生成并选定的 13 段无声动作视频（102 秒）；与用户另行导入的私人视频分开。书房 1820×1138，另两场景 1212×758，30fps。部分素材保留 beta 待实机状态；角色相关权利仍归相应权利方，既有许可边界不变。
+
+## 角色权利与第三方集成（beta.14）
+
+本项目为《崩坏：星穹铁道》角色“大黑塔”的非官方同人桌面主题，与米哈游及HoYoverse无隶属或官方合作关系。© 米哈游版权所有。角色及所涉原作素材的权利由米哈游及相应权利人保留；其他内容的相关权利、利益分别由各自权利人享有。本项目仅就维护者有权授权的贡献提供许可，AI辅助生成、免费分发和本项目的许可证均不表示取得官方授权。
+
+发布参考：[《崩坏：星穹铁道》同人衍生作品创作指引V3.0（2025-07-15）](https://www.bilibili.com/opus/1089707102255972370)。核对日期：2026-10-27。应按实际用途、地区和最新适用文本理解，不将实体周边问答直接扩大为所有免费数字主题的结论；商业用途或分发范围改变前须重新核对。
+
+可选开屏派生自 [lxj5820/dsh-boot-animation](https://github.com/lxj5820/dsh-boot-animation)，保留上游MIT许可证及版权声明；自有项目非商业许可不改变该部分和vendor SDK的原有许可。字体各遵循所附OFL。完整分类见项目文档 `docs/THIRD-PARTY.md`。
+
+DeepSeek余额小鲸鱼由 [MeteorNOX](https://github.com/MeteorNOX/DeepSeek-Balance-Whale-Widget) 维护，是另行安装的独立插件，不随本主题打包。上游代码为MIT；其图标、图片、动图和音效另受 [PROVENANCE](https://github.com/MeteorNOX/DeepSeek-Balance-Whale-Widget/blob/main/PROVENANCE.md) 限制，不因代码许可而获得再许可。兼容或同时显示不代表这些素材成为本主题的可分发资产。

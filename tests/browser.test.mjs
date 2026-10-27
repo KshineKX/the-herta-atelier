@@ -56,6 +56,18 @@ test('browser regression against a semantic DSH fixture (not native acceptance)'
       assert.ok(geometry.content>geometry.table);assert.equal(geometry.overflow,'auto');assert.ok(geometry.page<=geometry.window+1);
     }finally{await fixture.close()}
   });
+  await t.test('nested composer slots keep native geometry and receive no ornamental overlays',async()=>{
+    const fixture=await pageFor(),{page}=fixture;
+    try{
+      const result=await page.evaluate(async()=>{
+        const read=()=>{const card=document.querySelector('[data-composer-card]'),box=card.getBoundingClientRect();return [...card.querySelectorAll('textarea,button')].map(element=>{const r=element.getBoundingClientRect(),s=getComputedStyle(element);return{x:r.x-box.x,y:r.y-box.y,width:r.width,height:r.height,padding:s.padding}})};
+        const decorated=document.querySelectorAll('[data-composer-card] .herta-surface-trim,[data-composer-seat] .herta-surface-trim,[data-slot="composer"]>.herta-surface-trim,[data-slot="chat-input"]>.herta-surface-trim').length;
+        const display=getComputedStyle(document.querySelector('[data-slot="composer"]')).display;
+        window.demoDispose();const native=read();const{mount}=await import('/packages/skin/src/client.js');window.demoDispose=mount(document,{base:'/herta-atelier/'});return{decorated,display,native,skinned:read(),legacyWrapperBackground:getComputedStyle(document.querySelector('[data-slot="chat-input"]')).backgroundColor};
+      });
+      assert.equal(result.decorated,0);assert.equal(result.display,'contents');assert.equal(result.legacyWrapperBackground,'rgba(0, 0, 0, 0)');assert.deepEqual(result.skinned,result.native,'The skin may paint the card, but must not move the editor or send button');
+    }finally{await fixture.close()}
+  });
   await t.test('streamed answer chunks do not repeatedly measure the whole sidebar',async()=>{
     const fixture=await pageFor(),{page}=fixture;
     try{

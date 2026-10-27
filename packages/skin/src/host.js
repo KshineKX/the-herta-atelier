@@ -1,8 +1,14 @@
 export const HOST_SELECTORS=Object.freeze({
- surfaces:'[data-composer-card],[data-slot="conversation.composer.bar"],[data-slot="composer"],[data-slot="chat-input"],[data-conversation-scroll] pre,[data-slot="settings"]',
+ surfaces:'[data-conversation-scroll] pre,[data-slot="settings"]',
  conversation:'[data-conversation-region],[data-conversation-content],[data-conversation-scroll]',
  sidebar:'[data-slot="sidebar"]',
 });
+export function shouldDecorateSurface(element,win){
+ const composer='[data-composer-card],[data-composer-seat],[data-conversation-region="composer"],[data-slot="conversation.composer.bar"],[data-slot="composer"],[data-slot="chat-input"]';
+ if(element.closest(composer)||element.querySelector(composer))return false;
+ const display=win.getComputedStyle(element).display;
+ return display!=='contents'&&display!=='none';
+}
 export function shellFrame(doc,sidebar){
  const region=doc.querySelector(HOST_SELECTORS.conversation);if(!region||!sidebar||sidebar.contains(region))return null;
  for(let element=sidebar.parentElement;element&&element!==doc.body;element=element.parentElement){if(element.contains(region)&&doc.defaultView.getComputedStyle(element).display!=='contents')return element;}

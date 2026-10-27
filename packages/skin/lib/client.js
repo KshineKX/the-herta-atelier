@@ -189,7 +189,6 @@ body[data-herta-atelier] [data-conversation-scroll] table{border-collapse:collap
 body[data-herta-atelier] [data-conversation-scroll] :where(th,td){padding:10px 15px;border:1px solid var(--herta-line)}
 body[data-herta-atelier] [data-conversation-scroll] th{color:var(--herta-table-ink);font-weight:600}
 body[data-herta-atelier] [data-conversation-scroll] hr{border:0;height:1px;background:linear-gradient(90deg,transparent,var(--herta-gold),transparent);opacity:.45}
-body[data-herta-atelier] :where([data-slot=composer],[data-slot=chat-input],.composer){border-color:var(--herta-gold)!important;box-shadow:inset 0 0 0 4px rgba(217,185,110,.025),0 12px 40px rgba(10,5,20,.14)}
 body[data-herta-atelier] :where(button,a,input,select,textarea,[contenteditable=true]):focus-visible{outline:2px solid var(--herta-gold);outline-offset:3px}
 body[data-herta-atelier] ::-webkit-scrollbar{width:7px;height:7px}
 body[data-herta-atelier] ::-webkit-scrollbar-thumb{background:var(--herta-line);border:1px solid var(--herta-gold);border-radius:8px}
@@ -283,11 +282,6 @@ body[data-herta-atelier] [data-slot=sidebar]>button[aria-current=page]{border-co
 .herta-surface-trim:before,.herta-surface-trim:after{content:'';position:absolute;width:64px;height:64px;background:var(--herta-scroll) center/contain no-repeat;pointer-events:none}
 .herta-surface-trim:before{right:0;top:0;transform:rotate(90deg)}
 .herta-surface-trim:after{right:0;bottom:0;transform:rotate(180deg)}
-body[data-herta-atelier] :where([data-slot=composer],[data-slot=chat-input],.composer){border-radius:8px 24px 8px 24px;border:1px solid var(--herta-gold)!important;padding:23px 27px 17px;background-color:var(--herta-surface);background-image:var(--herta-key),linear-gradient(120deg,rgba(174,114,219,.07),transparent 48%);background-position:calc(100% - 70px) bottom,left top;background-size:27px 48px,100% 100%;background-repeat:no-repeat;box-shadow:inset 0 0 0 6px rgba(217,188,130,.025),0 14px 45px #10091d55}
-body[data-herta-atelier] :where([data-slot=composer],[data-slot=chat-input],.composer) textarea{padding:8px 26px;box-sizing:border-box}
-body[data-herta-atelier] :where([data-slot=composer],[data-slot=chat-input],.composer) .herta-surface-trim{background-size:52px 52px}
-body[data-herta-atelier] :where([data-slot=composer],[data-slot=chat-input],.composer) .herta-surface-trim:before,body[data-herta-atelier] :where([data-slot=composer],[data-slot=chat-input],.composer) .herta-surface-trim:after{width:52px;height:52px}
-body[data-herta-atelier] :where(.composer,[data-slot=composer]) button[aria-label*="发送"]{width:40px;height:40px;border-radius:50%;border:1px solid #d9bc82;background:radial-gradient(circle at 35% 25%,#a47ac7,#583175 65%,#29163c);color:#f0dba7;box-shadow:inset 0 0 0 3px #d9bc8229,0 0 12px #a174c733}
 body[data-herta-atelier] [data-conversation-scroll]{border-color:var(--herta-line);border-radius:8px 25px 8px 25px;box-shadow:inset 0 0 0 4px rgba(213,185,130,.035)}
 body[data-herta-atelier] [data-conversation-scroll] pre{border-radius:5px 15px 5px 15px;padding:48px 64px 34px;border-color:var(--herta-line);background:var(--herta-read);box-shadow:inset 0 0 0 5px rgba(217,188,130,.035)}
 body[data-herta-atelier] [data-conversation-scroll] pre .herta-surface-trim{background:var(--herta-scroll) left top/64px 64px no-repeat,var(--herta-divider) center top/190px 42px no-repeat}
@@ -421,7 +415,6 @@ body[data-herta-atelier] [data-herta-frame]:before,body[data-herta-atelier] .fix
 body[data-herta-atelier] [data-conversation-region]{border-radius:20px 20px 0 0!important;background:transparent!important}
 body[data-herta-atelier] [data-herta-sidebar-host]:after{border-radius:12px!important}
 body[data-herta-atelier] #herta-atelier-frame{border-radius:18px}
-body[data-herta-atelier] :where(.composer,[data-slot=composer],[data-slot=chat-input]){border-radius:22px!important}
 body[data-herta-atelier] [data-conversation-scroll]{border-radius:20px}
 body[data-herta-atelier] [data-conversation-scroll] :where(pre,blockquote){border-radius:14px}
 body[data-herta-atelier] #herta-atelier-controls section{border-radius:22px}
@@ -463,7 +456,7 @@ body[data-herta-atelier] #herta-atelier-controls>button img{width:23px;height:23
 body[data-herta-atelier] #herta-atelier-controls section{background-color:var(--herta-glass)!important;border-color:var(--herta-material-line);border-radius:22px;box-shadow:var(--herta-material-shadow);backdrop-filter:blur(14px) saturate(1.06)}
 body[data-herta-atelier] #herta-atelier-controls section :where(select,input){background-color:var(--herta-glass-soft);border-color:var(--herta-material-line)}
 body[data-herta-atelier] [data-herta-header]:not([data-herta-header] [data-herta-header]){background:var(--herta-glass-soft)!important;backdrop-filter:none!important}
-body[data-herta-atelier] :where([data-composer-card],[data-slot=composer],[data-slot=chat-input],.composer){background-color:var(--herta-glass)!important;background-image:none!important;border-color:var(--herta-material-line)!important;border-radius:20px!important;box-shadow:var(--herta-material-shadow)!important}
+body[data-herta-atelier] [data-composer-card]{background-color:var(--herta-glass)!important;background-image:none!important;border-color:var(--herta-material-line)!important;border-radius:20px!important;box-shadow:var(--herta-material-shadow)!important}
 body[data-herta-atelier] [data-conversation-scroll] :where(pre,blockquote){background:var(--herta-glass-solid)!important;background-image:none;border:1px solid var(--herta-material-line);border-radius:14px;box-shadow:inset 0 1px color-mix(in srgb,var(--herta-ink) 5%,transparent)}
 body[data-herta-atelier] [data-conversation-scroll] table{background:var(--herta-glass-solid)}
 @supports not (backdrop-filter:blur(10px)){body[data-herta-atelier] #herta-atelier-controls section,body[data-herta-atelier] .herta-mirror-panel[role=dialog]{background:var(--herta-glass-solid)!important}}
@@ -484,13 +477,19 @@ body[data-herta-atelier] .herta-art{filter:saturate(.96)}
 body[data-herta-tone=light] .herta-art-chat-light{filter:saturate(.94)}
 `;
 
-const PROJECT_VERSION="0.4.0-beta.13";
+const PROJECT_VERSION="0.4.0-beta.14";
 
 const HOST_SELECTORS=Object.freeze({
- surfaces:'[data-composer-card],[data-slot="conversation.composer.bar"],[data-slot="composer"],[data-slot="chat-input"],[data-conversation-scroll] pre,[data-slot="settings"]',
+ surfaces:'[data-conversation-scroll] pre,[data-slot="settings"]',
  conversation:'[data-conversation-region],[data-conversation-content],[data-conversation-scroll]',
  sidebar:'[data-slot="sidebar"]',
 });
+function shouldDecorateSurface(element,win){
+ const composer='[data-composer-card],[data-composer-seat],[data-conversation-region="composer"],[data-slot="conversation.composer.bar"],[data-slot="composer"],[data-slot="chat-input"]';
+ if(element.closest(composer)||element.querySelector(composer))return false;
+ const display=win.getComputedStyle(element).display;
+ return display!=='contents'&&display!=='none';
+}
 function shellFrame(doc,sidebar){
  const region=doc.querySelector(HOST_SELECTORS.conversation);if(!region||!sidebar||sidebar.contains(region))return null;
  for(let element=sidebar.parentElement;element&&element!==doc.body;element=element.parentElement){if(element.contains(region)&&doc.defaultView.getComputedStyle(element).display!=='contents')return element;}
@@ -1231,6 +1230,7 @@ function mount(doc = document, { base = '/herta-atelier/', storage = globalThis.
     ornamentalFrame.style.left = Math.max(12, (sidebar?.getBoundingClientRect().right || 0) + 12) + 'px';
     const surfaceElements = doc.querySelectorAll(HOST_SELECTORS.surfaces);
     for (const surface of surfaceElements) {
+      if (!shouldDecorateSurface(surface,doc.defaultView)) continue;
       if (decoratedSurfaces.has(surface)) continue;
       const trim = doc.createElement('div');
       trim.className = 'herta-surface-trim';
@@ -1241,7 +1241,7 @@ function mount(doc = document, { base = '/herta-atelier/', storage = globalThis.
       decoratedSurfaces.set(surface, trim);
     }
     for (const [surface, trim] of decoratedSurfaces) {
-      if (!surface.isConnected) { trim.remove(); decoratedSurfaces.delete(surface); }
+      if (!surface.isConnected || !shouldDecorateSurface(surface,doc.defaultView)) { trim.remove(); delete surface.dataset.hertaSurface;delete surface.dataset.hertaStatic;decoratedSurfaces.delete(surface); }
     }
     const frameEl = shellFrame(doc,sidebar);
     if (frameEl) frameEl.dataset.hertaFrame = '';

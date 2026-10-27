@@ -5,10 +5,10 @@
 **Kshine 的非官方 DSH 主题作品 · Windows**
 
 <!-- herta-source-version:start -->
-源码版本：**0.4.0-beta.13**
+源码版本：**0.4.0-beta.14**
 <!-- herta-source-version:end -->
 
-本版为工程整改 Beta，正式附件及每包验证回执见[beta.13发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.13)。本轮暂缓真实DSH安装、重启与实机验收，现用beta.11保持不动。检查与待验项见[交付状态](docs/RELEASE-REVIEW.md)，版本与构建职责见[单一源码入口](docs/SOURCE-OF-TRUTH.md)。
+本版为输入区定点修复 Beta，移除输入框多层花框及遮挡，保留编辑器和发送按钮原有布局。开发会话已完成本次输入区实机观察并得到用户确认；完整测试、两种包门禁和CI按最终提交执行，结果见[beta.14发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.14)及每包验证回执。本发布阶段不再次安装或重启真实DSH，长期性能和未测原生功能仍未验收。见[交付状态](docs/RELEASE-REVIEW.md)和[单一源码入口](docs/SOURCE-OF-TRUTH.md)。
 
 紫黑与晨光双主题，三组内置场景画像，以及银纹、紫花、宝石与钥匙的层叠框饰。观赏模式保留人物与场景；专注模式在宿主原有正文列背后增加柔边衬底，切换保留消息与输入框布局。面板、代码与输入框使用统一的紫调玻璃材质。
 
@@ -32,7 +32,7 @@
 
 ## 第一次使用
 
-1. 打开[beta.13发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.13)，下载 **The-Herta-Atelier-0.4.0-beta.13-theme.zip** 和对应 `.sha256`，核对后解压。仓库目前为私有，需要已获访问权限的GitHub账号。
+1. 打开[beta.14发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.14)，下载 **The-Herta-Atelier-0.4.0-beta.14-theme.zip** 和对应 `.sha256`，核对后解压。仓库目前为私有，需要已获访问权限的GitHub账号。
 2. 先运行一次DSH，保存工作并完全退出，再双击 **Install.cmd**。安装器校验并备份配置，联合安装代码和13段视频。
 3. 重新打开DSH，展开右上工具条，用四角星打开设置；选择静态／动态、画像场景、观赏／专注和深浅外观。
 4. 镜子按钮固定保留在工具条，点击才打开图库。**OpenGallery.cmd** 打开自己的图库目录，增删图片后重开藏镜刷新。
@@ -123,3 +123,5 @@ node tools/release.mjs
 这些文件说明现有许可边界，不等于已经核实全部第三方权利或取得角色官方授权。
 
 Required Notice: Copyright (c) 2026 Kshine. The Herta Atelier. https://github.com/KshineKX/the-herta-atelier
+
+第三方集成与素材许可见[上游与独立插件](docs/THIRD-PARTY.md)。DeepSeek余额小鲸鱼为MeteorNOX维护的独立插件，需另行安装，不属于本主题原创或内置功能；它的代码MIT许可不覆盖其全部美术素材。

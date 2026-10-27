@@ -7,7 +7,7 @@ const KEY = 'herta-atelier:v1';
 import { CSS, THEME_TRANSITION_MS } from './styles.js';
 import { PALETTES } from './palette.js';
 import { PROJECT_VERSION } from './project.generated.js';
-import { HOST_SELECTORS, shellFrame, shouldSyncMutation } from './host.js';
+import { HOST_SELECTORS, shellFrame, shouldSyncMutation, shouldDecorateSurface } from './host.js';
 const DEFAULTS = { opacity: 0.9, scene: 'auto', theme: 'auto', art: 'ultra', mirror: true, displayMode: 'admire', motion: 'static' };
 const SCENES = ['auto', ...Object.keys(SCENE_DEFINITIONS)];
 const THEMES = ['auto', 'light', 'dark'];
@@ -394,6 +394,7 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
     ornamentalFrame.style.left = Math.max(12, (sidebar?.getBoundingClientRect().right || 0) + 12) + 'px';
     const surfaceElements = doc.querySelectorAll(HOST_SELECTORS.surfaces);
     for (const surface of surfaceElements) {
+      if (!shouldDecorateSurface(surface,doc.defaultView)) continue;
       if (decoratedSurfaces.has(surface)) continue;
       const trim = doc.createElement('div');
       trim.className = 'herta-surface-trim';
@@ -404,7 +405,7 @@ export function mount(doc = document, { base = '/herta-atelier/', storage = glob
       decoratedSurfaces.set(surface, trim);
     }
     for (const [surface, trim] of decoratedSurfaces) {
-      if (!surface.isConnected) { trim.remove(); decoratedSurfaces.delete(surface); }
+      if (!surface.isConnected || !shouldDecorateSurface(surface,doc.defaultView)) { trim.remove(); delete surface.dataset.hertaSurface;delete surface.dataset.hertaStatic;decoratedSurfaces.delete(surface); }
     }
     const frameEl = shellFrame(doc,sidebar);
     if (frameEl) frameEl.dataset.hertaFrame = '';
