@@ -1,4 +1,4 @@
-# The Herta Atelier · 一条命令安装
+﻿# The Herta Atelier · 一条命令安装
 # 用法（先完全退出 DSH）：
 #   irm https://raw.githubusercontent.com/KshineKX/the-herta-atelier/main/install.ps1 | iex
 # 可选：
