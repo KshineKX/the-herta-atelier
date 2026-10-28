@@ -1,6 +1,6 @@
 # The Herta Atelier · 大黑塔·天才书房
 
-[代码许可：PolyForm Noncommercial 1.0.0](docs/LICENSE-SUMMARY.md) · 免费非商业使用、允许许可范围内的修改，分发保留署名
+[代码许可：MIT](docs/LICENSE-SUMMARY.md) · 允许使用、修改、分发与再许可；角色与第三方权利见 NOTICE
 
 **Kshine 的非官方 DSH 主题作品 · Windows**
 
@@ -31,6 +31,14 @@
 [打开MP4预览](docs/previews/motion-beta11.mp4)。动态图取现有原片每场景3秒拼接为9秒，并缩放压缩便于网页查看；不是原生DSH录屏，也不是完整动作周期。以上预览不代替跨机、长时间运行或每个动作的完整验收。
 
 ## 第一次使用
+
+**一条命令安装（推荐，先完全退出 DSH）：**
+
+\powershell
+irm https://raw.githubusercontent.com/KshineKX/the-herta-atelier/main/install.ps1 | iex
+\\n
+- 默认下载完整主题（约 296MB）；irm ... -OutFile install.ps1; .\install.ps1 -Core 只下核心包（0.4MB），-NoInstall 只下载解压不安装。
+- 也可以手动去 [beta.14 发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.14) 下载 zip + .sha256，核对后解压运行 Install.cmd。
 
 1. 打开[beta.14发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.14)，下载 **The-Herta-Atelier-0.4.0-beta.14-theme.zip** 和对应 `.sha256`，核对后解压。仓库已公开，可直接下载（无需申请权限）。
 2. 先运行一次DSH，保存工作并完全退出，再双击 **Install.cmd**。安装器校验并备份配置，联合安装代码和13段视频。
@@ -112,9 +120,9 @@ node tools/release.mjs
 
 ## 来源与许可
 
-作者可授权的代码采用 **PolyForm Noncommercial 1.0.0**，允许许可范围内的非商业使用、修改与衍生，分发保留许可和Required Notice；独立原创SVG框饰采用 **CC BY-NC-SA 4.0**。这是源码可用、非商业许可的个人作品，不称为标准开源软件。
+自 2026-10-28 起，作者有权授权的代码、文档、独立原创 SVG 框饰与随项目分发的素材采用 **MIT 许可证**（见 LICENSE）：允许使用、修改、分发、再许可与商业使用。历史发行版（beta.14 及以前）仍按当时发布的许可证继续有效；本次变更不追溯撤销已发布版本的授权。
 
-可选开屏仍为上游MIT许可，字体仍为SIL OFL；项目的非商业要求不改变第三方MIT/OFL原有权利。代码与美术许可只覆盖有权授权的贡献，不转移角色或商标权利，也不表示官方合作或获得单独角色授权。
+可选开屏仍为上游 MIT 许可，字体仍为 SIL OFL，第三方 MIT/OFL 部分保留原有权利。MIT 许可只覆盖 Kshine 有权授权的贡献，不转移角色或商标权利，也不表示官方合作或获得单独角色授权。
 
 独立美术的署名、许可链接与字体修改状态见[素材署名表](docs/ASSET-ATTRIBUTION.md)。
 

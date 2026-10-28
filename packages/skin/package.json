@@ -33,7 +33,7 @@
     "build": "node build.mjs"
   },
   "private": true,
-  "license": "PolyForm-Noncommercial-1.0.0",
+  "license": "MIT",
   "author": "Kshine",
   "repository": {
     "type": "git",
