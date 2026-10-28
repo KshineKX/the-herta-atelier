@@ -21,7 +21,7 @@ $assetName = "The-Herta-Atelier-$version-$kind.zip"
 $baseUrl = "https://github.com/$repo/releases/download/$Tag"
 $tempRoot = Join-Path $env:TEMP "the-herta-atelier-$version"
 $zipPath = Join-Path $tempRoot $assetName
-$shaPath = Join-Path $tempRoot "$assetName.sha256"
+$shaName = "The-Herta-Atelier-$version-$kind.sha256"`n$shaPath = Join-Path $tempRoot $shaName
 $extractDir = Join-Path $tempRoot 'extracted'
 
 function Download-File([string]$Url, [string]$OutFile) {
@@ -52,7 +52,7 @@ Write-Host "版本: $Tag ($kind)"
 Write-Host "下载: $baseUrl/$assetName"
 
 Download-File "$baseUrl/$assetName" $zipPath
-Download-File "$baseUrl/$assetName.sha256" $shaPath
+Download-File "$baseUrl/$shaName" $shaPath
 
 # 校验 SHA256（sha 文件第一段是哈希）
 $expected = (Get-Content $shaPath -Raw).Trim().Split()[0].ToLowerInvariant()
