@@ -4,6 +4,7 @@
 # 可选：
 #   irm ... -OutFile install.ps1; .\install.ps1 -NoInstall     # 只下载解压
 #   .\install.ps1 -Core                                       # 只下 0.4MB 核心包
+#   $env:HTTPS_PROXY='http://127.0.0.1:7890'; .\install.ps1    # 走代理
 param(
   [string]$Tag = 'v0.4.0-beta.14',
   [switch]$Core,
@@ -23,14 +24,35 @@ $zipPath = Join-Path $tempRoot $assetName
 $shaPath = Join-Path $tempRoot "$assetName.sha256"
 $extractDir = Join-Path $tempRoot 'extracted'
 
+function Download-File([string]$Url, [string]$OutFile) {
+  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $OutFile) | Out-Null
+  if (Test-Path $OutFile) { Remove-Item $OutFile -Force }
+  $curl = Get-Command curl.exe -ErrorAction SilentlyContinue
+  for ($i = 0; $i -lt 3; $i++) {
+    try {
+      if ($curl) {
+        $proxyArgs = @()
+        if ($env:HTTPS_PROXY) { $proxyArgs = @('--proxy', $env:HTTPS_PROXY) }
+        & curl.exe -L --fail --retry 2 --connect-timeout 20 --max-time 900 @proxyArgs -o $OutFile $Url
+        if ($LASTEXITCODE -eq 0 -and (Test-Path $OutFile) -and (Get-Item $OutFile).Length -gt 0) { return }
+      } else {
+        Invoke-WebRequest -Uri $Url -OutFile $OutFile -UseBasicParsing
+        if (Test-Path $OutFile) { return }
+      }
+    } catch {
+      Write-Host "下载失败，第 $($i + 1) 次重试：$Url"
+    }
+    Start-Sleep -Seconds 2
+  }
+  throw "下载失败（已重试 3 次）：$Url"
+}
+
 Write-Host "The Herta Atelier 安装器"
 Write-Host "版本: $Tag ($kind)"
 Write-Host "下载: $baseUrl/$assetName"
 
-New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null
-if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-Invoke-WebRequest -Uri "$baseUrl/$assetName" -OutFile $zipPath
-Invoke-WebRequest -Uri "$baseUrl/$assetName.sha256" -OutFile $shaPath
+Download-File "$baseUrl/$assetName" $zipPath
+Download-File "$baseUrl/$assetName.sha256" $shaPath
 
 # 校验 SHA256（sha 文件第一段是哈希）
 $expected = (Get-Content $shaPath -Raw).Trim().Split()[0].ToLowerInvariant()
