@@ -32,7 +32,7 @@
 
 ## 第一次使用
 
-1. 打开[beta.14发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.14)，下载 **The-Herta-Atelier-0.4.0-beta.14-theme.zip** 和对应 `.sha256`，核对后解压。仓库目前为私有，需要已获访问权限的GitHub账号。
+1. 打开[beta.14发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.14)，下载 **The-Herta-Atelier-0.4.0-beta.14-theme.zip** 和对应 `.sha256`，核对后解压。仓库已公开，可直接下载（无需申请权限）。
 2. 先运行一次DSH，保存工作并完全退出，再双击 **Install.cmd**。安装器校验并备份配置，联合安装代码和13段视频。
 3. 重新打开DSH，展开右上工具条，用四角星打开设置；选择静态／动态、画像场景、观赏／专注和深浅外观。
 4. 镜子按钮固定保留在工具条，点击才打开图库。**OpenGallery.cmd** 打开自己的图库目录，增删图片后重开藏镜刷新。
