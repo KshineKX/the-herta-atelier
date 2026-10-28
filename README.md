@@ -34,11 +34,12 @@
 
 **一条命令安装（推荐，先完全退出 DSH）：**
 
-\powershell
+```powershell
 irm https://raw.githubusercontent.com/KshineKX/the-herta-atelier/main/install.ps1 | iex
-\\n
-- 默认下载完整主题（约 296MB）；irm ... -OutFile install.ps1; .\install.ps1 -Core 只下核心包（0.4MB），-NoInstall 只下载解压不安装。
-- 也可以手动去 [beta.14 发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.14) 下载 zip + .sha256，核对后解压运行 Install.cmd。
+```
+
+- 默认下载完整主题（约 296MB）；`irm ... -OutFile install.ps1; .\install.ps1 -Core` 只下核心包（0.4MB），`-NoInstall` 只下载解压不安装。
+- 也可以手动去 [beta.14 发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.14) 下载 zip + `.sha256`，核对后解压运行 `Install.cmd`。
 
 1. 打开[beta.14发行页](https://github.com/KshineKX/the-herta-atelier/releases/tag/v0.4.0-beta.14)，下载 **The-Herta-Atelier-0.4.0-beta.14-theme.zip** 和对应 `.sha256`，核对后解压。仓库已公开，可直接下载（无需申请权限）。
 2. 先运行一次DSH，保存工作并完全退出，再双击 **Install.cmd**。安装器校验并备份配置，联合安装代码和13段视频。
@@ -76,11 +77,9 @@ beta.11 已修复宿主删除两行受管标记注释导致的误拒绝，本版
 
 ## 当前状态与验证范围
 
-beta.12发布准备已在正常Windows上下文执行完整74项测试，全部通过、无跳过，包含临时profile/junction、安装失败和中断恢复、Git快照及Edge语义夹具。正式theme/core包还必须通过干净提交归档、构建、全套测试、严格清单与ZIP解压复验；每份包的实际结果见发行附件verification.json和CI。
+**当前 main（2026-10-28 起）**：作者有权授权的代码、文档与素材采用 **MIT**，仓库公开；一条命令安装脚本见上。已发布 **v0.4.0-beta.14** 的 theme/core 附件仍按发布时的 PolyForm NC / CC BY-NC-SA 许可有效，不追溯变更。
 
-beta.12真实DSH安装与实机验收明确暂缓；浏览器夹具与ASAR静态锚点不能替代原生冷启动、每页布局、DPI或长期性能。以下beta.11记录仅为历史证据，不继承为beta.12已实机通过。
-
-beta.11 已发布；来源会话已从GitHub下载并完成隔离安装／回退验收，在DSH0.2.1-rc.3实际安装并重启。真实后端13段视频、26个首尾Range请求和3场景背景检查通过，宿主移除标记注释后的回退只读预检通过。新版界面与触发体验仍保留用户进一步确认范围，不宣称跨机或长期稳定性已完成。
+beta.14 发布准备完成最终包 30 项测试、7 组隔离浏览器检查，并复验 8 项关键恢复测试；真实后端 13 段视频、26 个首尾 Range 请求与 3 场景背景检查通过；GitHub 回下载核对一致。真实 DSH 的长期性能、跨机与未测原生功能仍未验收。
 
 发布阶段最终包30项测试、7组隔离浏览器检查通过；GitHub回下载核对一致，另复验8项关键恢复测试。浏览器长等待用timer harness提前回调，部分动作结尾seek；这些不是自然时长全程或自动原生帧测量。
 

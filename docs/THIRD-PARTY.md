@@ -12,6 +12,6 @@
 | 背景和动作视频 | 既有维护记录中的AI辅助画像及13段无声视频 | 制作来源不等于角色授权；见[素材台账](ASSET-RIGHTS.md)。本版不新增或替换媒体，不随包携带官方PV、私人图库、配音和用户素材 |
 | DeepSeek余额小鲸鱼 | [MeteorNOX/DeepSeek-Balance-Whale-Widget](https://github.com/MeteorNOX/DeepSeek-Balance-Whale-Widget) | 独立安装的兼容插件，不内置其代码或素材。代码[MIT](https://github.com/MeteorNOX/DeepSeek-Balance-Whale-Widget/blob/main/LICENSE)须保留原版权及全文；图标、图片、动图、音效不在代码MIT覆盖范围，遵从[素材声明](https://github.com/MeteorNOX/DeepSeek-Balance-Whale-Widget/blob/main/PROVENANCE.md)，不能直接提取再分发 |
 
-维护者新增且有权授权的代码沿用PolyForm Noncommercial 1.0.0，独立框饰沿用所附CC BY-NC-SA 4.0；这些条款均不重新许可米哈游角色、上游MIT代码或字体。不存在全包统一改为Kshine独占版权的声明。
+当前 main（2026-10-28 起）中维护者新增且有权授权的代码与素材采用 **MIT**；历史 beta.14 及以前按 PolyForm Noncommercial 1.0.0 / CC BY-NC-SA 4.0。上述条款均不重新许可米哈游角色、上游 MIT 代码或字体，不存在全包统一改为 Kshine 独占版权的声明。
 
 本表按本包实际采用的内容分类，不表示取得权利方单独授权。媒体清单和许可文件的构建检查证明文件身份与声明存在，不构成完整法律审计或跨地区用途保证。

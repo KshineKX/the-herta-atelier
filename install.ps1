@@ -24,6 +24,9 @@ $zipPath = Join-Path $tempRoot $assetName
 $shaName = "The-Herta-Atelier-$version-$kind.sha256"
 $shaPath = Join-Path $tempRoot $shaName
 $extractDir = Join-Path $tempRoot 'extracted'
+$TestSkipDownload = $env:HERTA_TEST_SKIP_DOWNLOAD -eq '1'
+$TestInstallCmd = $env:HERTA_TEST_INSTALL_CMD
+$TestSkipDshCheck = $env:HERTA_TEST_SKIP_DSH_CHECK -eq '1'
 
 function Download-File([string]$Url, [string]$OutFile) {
   New-Item -ItemType Directory -Force -Path (Split-Path -Parent $OutFile) | Out-Null
@@ -52,6 +55,7 @@ Write-Host "The Herta Atelier 安装器"
 Write-Host "版本: $Tag ($kind)"
 Write-Host "下载: $baseUrl/$assetName"
 
+if (-not $TestSkipDownload) {
 Download-File "$baseUrl/$assetName" $zipPath
 Download-File "$baseUrl/$shaName" $shaPath
 
@@ -65,8 +69,9 @@ Write-Host "SHA256 校验通过：$actual"
 
 if (Test-Path $extractDir) { Remove-Item $extractDir -Recurse -Force }
 Expand-Archive -Path $zipPath -DestinationPath $extractDir -Force
+}
 
-$installCmd = Get-ChildItem -Path $extractDir -Recurse -Filter 'Install.cmd' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+$installCmd = if ($TestInstallCmd) { Get-Item -LiteralPath $TestInstallCmd } else { Get-ChildItem -Path $extractDir -Recurse -Filter 'Install.cmd' -File -ErrorAction SilentlyContinue | Select-Object -First 1 }
 if (-not $installCmd) { throw "解压后找不到 Install.cmd：$extractDir" }
 
 if ($NoInstall) {
@@ -77,7 +82,7 @@ if ($NoInstall) {
 }
 
 $dsh = Get-Process | Where-Object { $_.ProcessName -like 'DeepSeek Harness*' }
-if ($dsh) {
+if ($dsh -and -not $TestSkipDshCheck) {
   throw "检测到 DSH 正在运行。请先保存工作并完全退出 DSH，再重新运行本脚本。安装入口：$($installCmd.FullName)"
 }
 
@@ -86,7 +91,11 @@ Write-Host "开始安装（会备份配置并校验）..."
 Push-Location $installCmd.Directory.FullName
 try {
   & cmd.exe /c "`"$($installCmd.FullName)`""
-  Write-Host "安装器退出码：$LASTEXITCODE"
+  $installExit = $LASTEXITCODE
+  Write-Host "安装器退出码：$installExit"
+  if ($installExit -ne 0) {
+    throw "安装失败（Install.cmd 退出码 $installExit）。请查看上面的安装日志；未显示完成状态。"
+  }
 } finally {
   Pop-Location
 }
