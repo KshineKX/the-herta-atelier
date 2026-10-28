@@ -1,3 +1,5 @@
+> 许可变更（2026-10-28）：作者有权授权的贡献已改为 **MIT**；本文件以下涉及旧许可证的描述仅适用于历史发行版（beta.14 及以前）。详见 [docs/LICENSE-CHANGE-2026-10-28.md](docs/LICENSE-CHANGE-2026-10-28.md)。
+
 # 参与维护
 
 维护者：Kshine；代码仓库为 KshineKX/the-herta-atelier。先用 Issues 描述问题或提议，较大改动先确认范围；一次提交解决一个明确问题。
