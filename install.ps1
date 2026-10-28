@@ -21,7 +21,8 @@ $assetName = "The-Herta-Atelier-$version-$kind.zip"
 $baseUrl = "https://github.com/$repo/releases/download/$Tag"
 $tempRoot = Join-Path $env:TEMP "the-herta-atelier-$version"
 $zipPath = Join-Path $tempRoot $assetName
-$shaName = "The-Herta-Atelier-$version-$kind.sha256"`n$shaPath = Join-Path $tempRoot $shaName
+$shaName = "The-Herta-Atelier-$version-$kind.sha256"
+$shaPath = Join-Path $tempRoot $shaName
 $extractDir = Join-Path $tempRoot 'extracted'
 
 function Download-File([string]$Url, [string]$OutFile) {
