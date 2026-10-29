@@ -28,7 +28,10 @@
     "LICENSE",
     "motion",
     "host-compatibility.json",
-    "skin.build.json"
+    "skin.build.json",
+    "screenshots.json",
+    "preview",
+    "README.md"
   ],
   "scripts": {
     "build": "node build.mjs"

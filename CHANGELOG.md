@@ -5,6 +5,7 @@
 ## 未发布（main）
 
 - 构建自动产出 `packages/skin/skin.build.json`（schema 1 确定性命中指纹），让 DSH 皮肤管理器能核对本地安装与官方仓库构建；指纹只覆盖 `lib/client.js`、`lib/index.js`、`cordis.patch.yml`、`skin.json` 四个运行输入，文档/测试提交不会造成误报更新。
+- 皮肤子包补充 `preview/` 两张真实界面截图、`screenshots.json` 与子包 `README.md`（含安装命令和兼容/许可说明），为 DSH 皮肤市场收录与仓库自述做准备；运行文件与构建指纹均未变化。
 
 ## 0.4.0-beta.14
 
