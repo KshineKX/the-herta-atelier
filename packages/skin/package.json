@@ -27,7 +27,8 @@
     "NOTICE.md",
     "LICENSE",
     "motion",
-    "host-compatibility.json"
+    "host-compatibility.json",
+    "skin.build.json"
   ],
   "scripts": {
     "build": "node build.mjs"

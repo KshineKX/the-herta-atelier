@@ -2,6 +2,10 @@
 
 # 更新记录
 
+## 未发布（main）
+
+- 构建自动产出 `packages/skin/skin.build.json`（schema 1 确定性命中指纹），让 DSH 皮肤管理器能核对本地安装与官方仓库构建；指纹只覆盖 `lib/client.js`、`lib/index.js`、`cordis.patch.yml`、`skin.json` 四个运行输入，文档/测试提交不会造成误报更新。
+
 ## 0.4.0-beta.14
 
 - 定点修复输入区多层金框/花饰遮挡：排除composer及其结构容器，只保留输入卡片玻璃材质，不覆盖编辑器padding与发送按钮几何。
