@@ -151,6 +151,16 @@
       "path": "packages/skin/motion/room-tilt/video.mp4",
       "bytes": 2974265,
       "sha256": "1a1c3b3394cd3550988f08bf389f1868b2263fd8eae4acb63ae807e782ee4eec"
+    },
+    {
+      "path": "packages/skin/preview/overview-beta11-dark.jpg",
+      "bytes": 380424,
+      "sha256": "8bf8abc74efdc72e9559a5de91dde4df5c66c824cf4a390b0947218d41058e4b"
+    },
+    {
+      "path": "packages/skin/preview/overview-beta11-light.jpg",
+      "bytes": 280027,
+      "sha256": "5505abee71fce04c13da017e318c9ca06a1227da18cb3687c4be51fcea9b04c2"
     }
   ]
 }
