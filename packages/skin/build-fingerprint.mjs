@@ -2,7 +2,7 @@ import fs from 'node:fs';import path from 'node:path';import crypto from 'node:c
 // Deterministic build identity read by DSH skin managers (skin.build.json, schema 1).
 // Only shipped runtime inputs are hashed; docs, tests and this metadata file stay out.
 export const META_FILE='skin.build.json';
-export const FINGERPRINT_INPUTS=['lib/client.js','lib/index.js','cordis.patch.yml','skin.json'];
+export const FINGERPRINT_INPUTS=['lib/client.js','lib/index.js','lib/motion.js','cordis.patch.yml','skin.json'];
 export function skinFingerprint(base){
  const hash=crypto.createHash('sha256');
  for(const input of FINGERPRINT_INPUTS){const text=fs.readFileSync(path.join(base,input),'utf8').replaceAll('\r\n','\n');hash.update(input+'\0'+Buffer.byteLength(text)+'\0');hash.update(text);}

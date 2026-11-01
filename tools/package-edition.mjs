@@ -10,8 +10,10 @@ export function prepareEdition(stage, edition) {
   if (edition === 'core') {
     const file = path.join(stage, 'packages/skin/package.json');
     const pkg = JSON.parse(fs.readFileSync(file));
-    pkg.files = pkg.files.filter(entry => entry !== 'motion');
+    pkg.files = pkg.files.filter(entry => entry !== 'motion' && entry !== 'preview');
     fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + '\n');
+    const screenshots = path.join(stage, 'packages/skin/screenshots.json');
+    if (fs.existsSync(screenshots)) fs.writeFileSync(screenshots, '[]\n');
   }
   const file = path.join(stage, 'media-manifest.json');
   const manifest = JSON.parse(fs.readFileSync(file));

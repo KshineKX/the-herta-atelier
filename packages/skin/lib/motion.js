@@ -1,7 +1,8 @@
-import fs from 'node:fs';import path from 'node:path';import {dataDirectory} from './settings.js';
+import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';import {dataDirectory} from './settings.js';
 const clipId=/^[a-z][a-z0-9-]{1,50}$/;
 export function registerMotion(register,{directory,base='/herta-atelier/'}={}){
- const folder=()=>directory||path.join(dataDirectory(),'motion');
+ const bundled=fileURLToPath(new URL('../motion/',import.meta.url));
+ const folder=()=>{if(directory)return directory;const external=path.join(dataDirectory(),'motion');return fs.existsSync(path.join(external,'motion-manifest.json'))?external:bundled;};
  function clipFile(id,entry){
   if(!clipId.test(id)||typeof entry?.file!=='string'||!new RegExp('^'+id+'/video\\.mp4$').test(entry.file))return null;
   try{const root=fs.realpathSync(folder()),file=path.join(folder(),entry.file),stat=fs.lstatSync(file);if(!stat.isFile()||!fs.realpathSync(file).startsWith(root+path.sep))return null;return {file,stat}}catch{return null}
