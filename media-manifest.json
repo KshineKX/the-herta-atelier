@@ -161,6 +161,16 @@
       "path": "packages/skin/preview/overview-beta11-light.jpg",
       "bytes": 280027,
       "sha256": "5505abee71fce04c13da017e318c9ca06a1227da18cb3687c4be51fcea9b04c2"
+    },
+    {
+      "path": "packages/skin/preview/showcase-beta14-dark.jpg",
+      "bytes": 777473,
+      "sha256": "536964298057ceaa433a4b1d0a4a56e2b7427d6c42fcdc78e0b5c317fda121ec"
+    },
+    {
+      "path": "packages/skin/preview/showcase-beta14-light.jpg",
+      "bytes": 807556,
+      "sha256": "9bbc008e99131d7ebd3f4b12d3f306f29d7cf2712c6dcc044b25dcd3a628adb6"
     }
   ]
 }

@@ -18,11 +18,19 @@
 
 ## 预览
 
-以下为已发布 beta.11 的浅色与深色演示页截图，使用虚构内容，不含真实聊天；不冒充新候选的原生实机截图：
+以下前两图使用已审阅 beta.14 视觉代码和内置书房画像，展示深浅观赏模式。它们是使用虚构欢迎页内容的**皮肤代码隔离预览，不是原生 DSH 截图**，不含真实账号或聊天；不代表新增美术或完整原生功能验收。
 
-![beta.11 浅色界面演示](docs/screenshots/overview-beta11-light.jpg)
+![beta.14 深色观赏模式隔离预览](packages/skin/preview/showcase-beta14-dark.jpg)
 
-![beta.11 深色界面演示](docs/screenshots/overview-beta11-dark.jpg)
+![beta.14 浅色观赏模式隔离预览](packages/skin/preview/showcase-beta14-light.jpg)
+
+### 阅读示例（历史隔离演示）
+
+以下为 beta.11 的阅读示例，使用虚构内容，同样不是原生 DSH 实机截图。
+
+![beta.11 浅色阅读隔离演示](docs/screenshots/overview-beta11-light.jpg)
+
+![beta.11 深色阅读隔离演示](docs/screenshots/overview-beta11-dark.jpg)
 
 三场景动态预览：
 

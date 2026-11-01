@@ -2,9 +2,21 @@
 
 The Herta Atelier —— 非官方《崩坏：星穹铁道》大黑塔同人 DSH Web 主题皮肤：紫黑与晨光双主题、统一玻璃材质、藏镜图库与独立动态待机。
 
-![总览 · 晨光](preview/overview-beta11-light.jpg)
+## 观赏模式预览
 
-![总览 · 紫黑](preview/overview-beta11-dark.jpg)
+前两图为 beta.14 视觉代码与内置书房画像的隔离预览，使用虚构欢迎页内容；不是原生 DSH 实机截图，不含真实账号或聊天。
+
+![深色观赏模式隔离预览](preview/showcase-beta14-dark.jpg)
+
+![浅色观赏模式隔离预览](preview/showcase-beta14-light.jpg)
+
+### 阅读示例（历史隔离演示）
+
+以下 beta.11 阅读示例同样使用虚构界面内容，不作为原生截图或新版实机验收证据。
+
+![浅色阅读隔离示例](preview/overview-beta11-light.jpg)
+
+![深色阅读隔离示例](preview/overview-beta11-dark.jpg)
 
 ## 安装
 
